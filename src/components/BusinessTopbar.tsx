@@ -44,7 +44,7 @@ export default function BusinessTopbar({
           {businessLogo ? (
             <img src={businessLogo} alt={businessName} className="w-full h-full object-contain" />
           ) : (
-            <img src="/assets/images/app_logo.png" alt="WITH-IN" className="w-6 h-6 object-contain" />
+            <span className="text-white font-black text-xs tracking-tight leading-none">W·IN</span>
           )}
         </div>
         <div className="min-w-0">
