@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard, ShoppingCart, Users, Package,
   Truck, BarChart3, Settings, ChevronLeft, ChevronRight,
-  Bell, LogOut, X, CreditCard, Warehouse,
+  Bell, LogOut, X, CreditCard, Warehouse, UserCircle, UserCog,
 } from 'lucide-react';
 import WithinBranding from '@/components/WithinBranding';
 
@@ -25,9 +25,11 @@ const navItems = [
   { key: 'nav-dashboard', href: '/business-admin-dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { key: 'nav-orders', href: '/orders', icon: ShoppingCart, label: 'Orders', badge: 'orders' },
   { key: 'nav-customers', href: '/customers', icon: Users, label: 'Customers' },
+  { key: 'nav-customer-portal', href: '/customer-portal', icon: UserCircle, label: 'Customer Portal' },
   { key: 'nav-products', href: '/products', icon: Package, label: 'Products', badge: 'stock' },
   { key: 'nav-inventory', href: '/inventory', icon: Warehouse, label: 'Inventory' },
   { key: 'nav-drivers', href: '/drivers', icon: Truck, label: 'Drivers' },
+  { key: 'nav-staff', href: '/staff-management', icon: UserCog, label: 'Staff' },
   { key: 'nav-reports', href: '/reports', icon: BarChart3, label: 'Reports' },
   { key: 'nav-subscription', href: '/subscription', icon: CreditCard, label: 'Subscription' },
   { key: 'nav-settings', href: '/settings', icon: Settings, label: 'Settings' },
@@ -57,16 +59,12 @@ export default function BusinessSidebar({
       <div className={`flex items-center border-b border-border h-16 px-3 ${collapsed ? 'justify-center' : 'justify-between'}`}>
         {!collapsed ? (
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-9 h-9 rounded-lg overflow-hidden flex-shrink-0 within-gradient flex items-center justify-center">
+            {/* WITH-IN text logo */}
+            <div className="w-9 h-9 rounded-lg flex-shrink-0 within-gradient flex items-center justify-center">
               {logoUrl ? (
-                <img src={logoUrl} alt={businessName} className="w-full h-full object-contain" />
+                <img src={logoUrl} alt={businessName} className="w-full h-full object-contain rounded-lg" />
               ) : (
-                <img
-                  src="/assets/images/IMG-20260712-WA0001-1784701905533.jpg"
-                  alt="WITH-IN"
-                  className="w-7 h-7 object-contain"
-                  style={{ filter: 'brightness(0) invert(1)' }}
-                />
+                <span className="text-white font-black text-xs tracking-tighter leading-none">W·IN</span>
               )}
             </div>
             <div className="min-w-0">
@@ -75,16 +73,11 @@ export default function BusinessSidebar({
             </div>
           </div>
         ) : (
-          <div className="w-9 h-9 rounded-lg overflow-hidden within-gradient flex items-center justify-center">
+          <div className="w-9 h-9 rounded-lg within-gradient flex items-center justify-center">
             {logoUrl ? (
-              <img src={logoUrl} alt={businessName} className="w-full h-full object-contain" />
+              <img src={logoUrl} alt={businessName} className="w-full h-full object-contain rounded-lg" />
             ) : (
-              <img
-                src="/assets/images/IMG-20260712-WA0001-1784701905533.jpg"
-                alt="WITH-IN"
-                className="w-7 h-7 object-contain"
-                style={{ filter: 'brightness(0) invert(1)' }}
-              />
+              <span className="text-white font-black text-xs tracking-tighter leading-none">W·IN</span>
             )}
           </div>
         )}

@@ -2,7 +2,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Building2, CreditCard, Users, BarChart3, Settings, ChevronLeft, ChevronRight, Bell, LogOut, Activity, X,  } from 'lucide-react';
+import { LayoutDashboard, Building2, CreditCard, Users, BarChart3, Settings, ChevronLeft, ChevronRight, Bell, LogOut, Activity, X } from 'lucide-react';
 import WithinBranding from '@/components/WithinBranding';
 
 interface SuperAdminSidebarProps {
@@ -47,13 +47,8 @@ export default function SuperAdminSidebar({
       <div className={`flex items-center border-b border-border h-16 px-3 ${collapsed ? 'justify-center' : 'justify-between'}`}>
         {!collapsed ? (
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 within-gradient rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
-              <img
-                src="/assets/images/IMG-20260712-WA0001-1784701905533.jpg"
-                alt="WITH-IN"
-                className="w-6 h-6 object-contain"
-                style={{ filter: 'brightness(0) invert(1)' }}
-              />
+            <div className="w-8 h-8 within-gradient rounded-lg flex items-center justify-center flex-shrink-0">
+              <span className="text-white font-black text-xs tracking-tighter leading-none">W·IN</span>
             </div>
             <div>
               <p className="text-sm font-bold text-foreground leading-tight">WITH-IN</p>
@@ -61,28 +56,31 @@ export default function SuperAdminSidebar({
             </div>
           </div>
         ) : (
-          <div className="w-8 h-8 within-gradient rounded-lg flex items-center justify-center overflow-hidden">
-            <img
-              src="/assets/images/IMG-20260712-WA0001-1784701905533.jpg"
-              alt="WITH-IN"
-              className="w-6 h-6 object-contain"
-              style={{ filter: 'brightness(0) invert(1)' }}
-            />
+          <div className="w-8 h-8 within-gradient rounded-lg flex items-center justify-center">
+            <span className="text-white font-black text-xs tracking-tighter leading-none">W·IN</span>
           </div>
         )}
         {!collapsed && (
-          <button onClick={onToggle} className="hidden lg:flex p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-all">
-            <ChevronLeft size={18} />
-          </button>
-        )}
-        {!collapsed && onMobileClose && (
-          <button onClick={onMobileClose} className="lg:hidden p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-all">
-            <X size={18} />
-          </button>
+          <>
+            <button
+              onClick={onToggle}
+              className="hidden lg:flex p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-all duration-150"
+            >
+              <ChevronLeft size={18} />
+            </button>
+            {onMobileClose && (
+              <button
+                onClick={onMobileClose}
+                className="lg:hidden p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-all duration-150"
+              >
+                <X size={18} />
+              </button>
+            )}
+          </>
         )}
       </div>
 
-      {/* Nav */}
+      {/* Nav Items */}
       <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-0.5">
         {navItems.map((item) => {
           const active = isActive(item.href);
@@ -92,17 +90,20 @@ export default function SuperAdminSidebar({
               key={item.key}
               href={item.href}
               onClick={onMobileClose}
-              className={`nav-item ${active ? 'nav-item-active bg-primary/10' : 'nav-item-inactive'} ${collapsed ? 'justify-center px-2' : ''} relative group min-h-[44px]`}
+              className={`nav-item ${active ? 'nav-item-active bg-primary/10' : 'nav-item-inactive'} ${
+                collapsed ? 'justify-center px-2' : ''
+              } relative group min-h-[44px]`}
+              title={collapsed ? item.label : undefined}
             >
               <item.icon size={20} className="flex-shrink-0" />
               {!collapsed && <span className="flex-1 truncate text-sm">{item.label}</span>}
               {!collapsed && badge !== null && (
-                <span className="ml-auto bg-warning text-white text-xs font-bold px-2 py-0.5 rounded-full min-w-[22px] text-center">
+                <span className="ml-auto bg-danger text-white text-xs font-bold px-2 py-0.5 rounded-full min-w-[22px] text-center">
                   {badge}
                 </span>
               )}
               {collapsed && badge !== null && (
-                <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-warning rounded-full border-2 border-card" />
+                <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-danger rounded-full border-2 border-card" />
               )}
               {collapsed && (
                 <span className="absolute left-full ml-2 px-2.5 py-1.5 bg-foreground text-primary-foreground text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50 shadow-lg">
@@ -117,19 +118,18 @@ export default function SuperAdminSidebar({
       {/* Bottom */}
       <div className="border-t border-border p-2 space-y-0.5">
         <Link
-          href="/super-admin-panel/activity"
+          href="/notifications"
           onClick={onMobileClose}
           className={`nav-item nav-item-inactive ${collapsed ? 'justify-center px-2' : ''} group relative min-h-[44px]`}
         >
           <Bell size={20} className="flex-shrink-0" />
-          {!collapsed && <span className="truncate text-sm">Alerts</span>}
+          {!collapsed && <span className="truncate text-sm">Notifications</span>}
           {collapsed && (
             <span className="absolute left-full ml-2 px-2.5 py-1.5 bg-foreground text-primary-foreground text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50 shadow-lg">
-              Alerts
+              Notifications
             </span>
           )}
         </Link>
-
         <button
           onClick={onSignOut}
           className={`nav-item text-danger hover:bg-danger/10 hover:text-danger w-full ${collapsed ? 'justify-center px-2' : ''} group relative min-h-[44px]`}
@@ -142,7 +142,6 @@ export default function SuperAdminSidebar({
             </span>
           )}
         </button>
-
         {!collapsed && (
           <div className="pt-2 pb-1">
             <WithinBranding variant="inline" />
@@ -151,7 +150,7 @@ export default function SuperAdminSidebar({
         {collapsed && (
           <button
             onClick={onToggle}
-            className="w-full flex justify-center items-center p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-all min-h-[44px]"
+            className="w-full flex justify-center p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-all duration-150 min-h-[44px] items-center"
           >
             <ChevronRight size={18} />
           </button>
