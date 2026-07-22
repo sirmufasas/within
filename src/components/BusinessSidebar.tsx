@@ -69,7 +69,7 @@ export default function BusinessSidebar({
                 <img src={logoUrl} alt={businessName} className="w-full h-full object-contain rounded-lg" />
               ) : (
                 <img
-                  src="/assets/images/IMG-20260712-WA0001-1784701905533.jpg"
+                  src="/assets/images/download-1784730896538.png"
                   alt="WITH-IN"
                   className="w-6 h-6 object-contain"
                 />
@@ -86,7 +86,7 @@ export default function BusinessSidebar({
               <img src={logoUrl} alt={businessName} className="w-full h-full object-contain rounded-lg" />
             ) : (
               <img
-                src="/assets/images/IMG-20260712-WA0001-1784701905533.jpg"
+                src="/assets/images/download-1784730896538.png"
                 alt="WITH-IN"
                 className="w-6 h-6 object-contain"
               />
