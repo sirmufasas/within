@@ -4,7 +4,7 @@ import BusinessLayout from '@/components/BusinessLayout';
 
 export const dynamic = 'force-dynamic';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { TrendingUp, DollarSign, ShoppingCart, Users } from 'lucide-react';
+import { TrendingUp, DollarSign, ShoppingCart, Users, FileText, FileSpreadsheet, Download } from 'lucide-react';
 
 const revenueData = [
   { month: 'Jan', revenue: 12400, orders: 142 },
@@ -58,6 +58,84 @@ const CustomTooltip = ({ active, payload, label }: TooltipProps) => {
 export default function ReportsPage() {
   const [activeChart, setActiveChart] = useState<'revenue' | 'orders'>('revenue');
   const [selectedBar, setSelectedBar] = useState<typeof revenueData[0] | null>(null);
+  const [exporting, setExporting] = useState(false);
+
+  const exportPDF = async () => {
+    setExporting(true);
+    try {
+      const { default: jsPDF } = await import('jspdf');
+      const { default: autoTable } = await import('jspdf-autotable');
+      const doc = new jsPDF();
+
+      doc.setFontSize(18);
+      doc.setTextColor(79, 70, 229);
+      doc.text('WITH-IN — Business Report', 14, 20);
+
+      doc.setFontSize(10);
+      doc.setTextColor(100, 100, 100);
+      doc.text(`Generated: ${new Date().toLocaleDateString('en-GB')}`, 14, 28);
+
+      doc.setFontSize(13);
+      doc.setTextColor(30, 30, 30);
+      doc.text('Revenue & Orders Summary', 14, 40);
+
+      autoTable(doc, {
+        startY: 45,
+        head: [['Month', 'Revenue (R)', 'Orders']],
+        body: revenueData.map(r => [r.month, r.revenue.toLocaleString(), r.orders]),
+        headStyles: { fillColor: [79, 70, 229] },
+        styles: { fontSize: 10 },
+      });
+
+      const afterRevenue = (doc as any).lastAutoTable.finalY + 10;
+      doc.setFontSize(13);
+      doc.setTextColor(30, 30, 30);
+      doc.text('Top Products', 14, afterRevenue);
+
+      autoTable(doc, {
+        startY: afterRevenue + 5,
+        head: [['Product', 'Units Sold', 'Revenue (R)']],
+        body: topProducts.map(p => [p.name, p.sales, p.revenue.toLocaleString()]),
+        headStyles: { fillColor: [79, 70, 229] },
+        styles: { fontSize: 10 },
+      });
+
+      doc.save('within-report.pdf');
+    } catch (e) {
+      console.error('PDF export failed', e);
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const exportExcel = async () => {
+    setExporting(true);
+    try {
+      const XLSX = await import('xlsx');
+      const wb = XLSX.utils.book_new();
+
+      const revenueSheet = XLSX.utils.json_to_sheet(
+        revenueData.map(r => ({ Month: r.month, 'Revenue (R)': r.revenue, Orders: r.orders }))
+      );
+      XLSX.utils.book_append_sheet(wb, revenueSheet, 'Revenue & Orders');
+
+      const productsSheet = XLSX.utils.json_to_sheet(
+        topProducts.map(p => ({ Product: p.name, 'Units Sold': p.sales, 'Revenue (R)': p.revenue }))
+      );
+      XLSX.utils.book_append_sheet(wb, productsSheet, 'Top Products');
+
+      const customerSheet = XLSX.utils.json_to_sheet(
+        customerData.map(c => ({ Customer: c.name, 'Revenue Share (%)': c.value }))
+      );
+      XLSX.utils.book_append_sheet(wb, customerSheet, 'Customer Distribution');
+
+      XLSX.writeFile(wb, 'within-report.xlsx');
+    } catch (e) {
+      console.error('Excel export failed', e);
+    } finally {
+      setExporting(false);
+    }
+  };
 
   return (
     <BusinessLayout>
@@ -67,12 +145,30 @@ export default function ReportsPage() {
             <h1 className="text-2xl font-bold text-foreground">Reports</h1>
             <p className="text-sm text-muted-foreground mt-0.5">Business performance overview</p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <select className="input-field w-36 text-sm py-2.5">
               <option>This Year</option>
               <option>Last 6 Months</option>
               <option>This Month</option>
             </select>
+            <button
+              onClick={exportPDF}
+              disabled={exporting}
+              className="btn-secondary text-sm flex items-center gap-2 disabled:opacity-60"
+            >
+              <FileText size={15} />
+              <span className="hidden sm:inline">Export PDF</span>
+              <span className="sm:hidden">PDF</span>
+            </button>
+            <button
+              onClick={exportExcel}
+              disabled={exporting}
+              className="btn-secondary text-sm flex items-center gap-2 disabled:opacity-60"
+            >
+              <FileSpreadsheet size={15} />
+              <span className="hidden sm:inline">Export Excel</span>
+              <span className="sm:hidden">Excel</span>
+            </button>
           </div>
         </div>
 
@@ -133,7 +229,16 @@ export default function ReportsPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Top Products */}
           <div className="card-base p-5">
-            <h3 className="font-semibold text-foreground mb-4">Top Products by Sales</h3>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold text-foreground">Top Products by Sales</h3>
+              <button
+                onClick={exportExcel}
+                disabled={exporting}
+                className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors disabled:opacity-60"
+              >
+                <Download size={13} /> Export
+              </button>
+            </div>
             <div className="space-y-3">
               {topProducts.map((p, i) => (
                 <div key={i} className="flex items-center gap-3">
