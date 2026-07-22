@@ -95,7 +95,6 @@ export default function WithinLoader({ message = 'Loading your workspace...' }: 
               src="/assets/images/IMG-20260712-WA0001-1784701905533.jpg"
               alt="WITH-IN Logo"
               className="w-16 h-16 object-contain"
-              style={{ filter: 'brightness(0) invert(1)' }}
             />
           </div>
         </div>

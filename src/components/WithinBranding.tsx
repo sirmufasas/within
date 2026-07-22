@@ -6,17 +6,20 @@ interface WithinBrandingProps {
   className?: string;
 }
 
-// Original WITH-IN X logo badge using the uploaded image
 function WithinLogoBadge({ size = 20 }: { size?: number }) {
   return (
     <span
-      className="inline-flex items-center justify-center within-gradient rounded flex-shrink-0 overflow-hidden"
-      style={{ width: size, height: size }}
+      className="inline-flex items-center justify-center rounded flex-shrink-0 overflow-hidden"
+      style={{
+        width: size,
+        height: size,
+        background: 'linear-gradient(135deg, #312E81 0%, #4F46E5 40%, #6366F1 100%)',
+      }}
     >
       <img
         src="/assets/images/IMG-20260712-WA0001-1784701905533.jpg"
         alt="WITH-IN"
-        style={{ width: size * 0.8, height: size * 0.8, objectFit: 'contain', filter: 'brightness(0) invert(1)' }}
+        style={{ width: size * 0.8, height: size * 0.8, objectFit: 'contain' }}
       />
     </span>
   );

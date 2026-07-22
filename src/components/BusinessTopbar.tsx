@@ -48,7 +48,6 @@ export default function BusinessTopbar({
               src="/assets/images/IMG-20260712-WA0001-1784701905533.jpg"
               alt="WITH-IN"
               className="w-5 h-5 object-contain"
-              style={{ filter: 'brightness(0) invert(1)' }}
             />
           )}
         </div>

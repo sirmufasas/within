@@ -72,7 +72,6 @@ export default function BusinessSidebar({
                   src="/assets/images/IMG-20260712-WA0001-1784701905533.jpg"
                   alt="WITH-IN"
                   className="w-6 h-6 object-contain"
-                  style={{ filter: 'brightness(0) invert(1)' }}
                 />
               )}
             </div>
@@ -90,7 +89,6 @@ export default function BusinessSidebar({
                 src="/assets/images/IMG-20260712-WA0001-1784701905533.jpg"
                 alt="WITH-IN"
                 className="w-6 h-6 object-contain"
-                style={{ filter: 'brightness(0) invert(1)' }}
               />
             )}
           </div>

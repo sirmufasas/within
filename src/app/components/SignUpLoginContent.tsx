@@ -251,7 +251,6 @@ export default function SignUpLoginContent() {
                 src="/assets/images/IMG-20260712-WA0001-1784701905533.jpg"
                 alt="WITH-IN Logo"
                 className="w-9 h-9 object-contain"
-                style={{ filter: 'brightness(0) invert(1)' }}
               />
             </div>
             <div>
@@ -316,7 +315,6 @@ export default function SignUpLoginContent() {
                 src="/assets/images/IMG-20260712-WA0001-1784701905533.jpg"
                 alt="WITH-IN"
                 className="w-6 h-6 object-contain"
-                style={{ filter: 'brightness(0) invert(1)' }}
               />
             </div>
             <span className="font-bold text-foreground">WITH-IN</span>
