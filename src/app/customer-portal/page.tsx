@@ -3,7 +3,8 @@ export const dynamic = 'force-dynamic';
 
 import React, { useState } from 'react';
 import BusinessLayout from '@/components/BusinessLayout';
-import { ShoppingCart, Heart, User, Package, Clock, CheckCircle, XCircle, Truck, Search, MapPin, Phone, Mail, ChevronRight, ArrowLeft,  } from 'lucide-react';
+import { ShoppingCart, Heart, User, Package, Clock, CheckCircle, XCircle, Truck, Search, MapPin, Phone, Mail, ChevronRight, ArrowLeft, } from 'lucide-react';
+import Link from 'next/link';
 
 const mockPortalCustomers = [
   {
@@ -266,6 +267,30 @@ export default function CustomerPortalPage() {
             <h1 className="text-2xl font-bold text-foreground">Customer Portal</h1>
             <p className="text-sm text-muted-foreground mt-0.5">View customer orders, saved items, and account details</p>
           </div>
+        </div>
+
+        {/* Portal Quick Access */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {[
+            { href: '/customer-portal/orders', icon: ShoppingCart, label: 'All Orders', desc: 'View & manage all customer orders', color: 'bg-primary/10 text-primary' },
+            { href: '/customer-portal/saved', icon: Heart, label: 'Saved Items', desc: 'Customer favourite products', color: 'bg-danger/10 text-danger' },
+            { href: '/customer-portal/account', icon: User, label: 'Accounts', desc: 'Manage customer account details', color: 'bg-success/10 text-success' },
+          ].map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className="card-base p-5 flex items-center gap-4 hover:shadow-md hover:border-primary/30 transition-all group"
+            >
+              <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${item.color}`}>
+                <item.icon size={22} />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="font-semibold text-foreground">{item.label}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{item.desc}</p>
+              </div>
+              <ChevronRight size={16} className="text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0" />
+            </Link>
+          ))}
         </div>
 
         {/* Stats */}

@@ -8,7 +8,7 @@ import {
   Bell, LogOut, X, CreditCard, Warehouse, UserCircle, UserCog,
   MapPin, LineChart,
 } from 'lucide-react';
-import AppLogo from '@/components/ui/AppLogo';
+
 import WithinBranding from '@/components/WithinBranding';
 
 interface SidebarProps {
@@ -32,6 +32,7 @@ const navItems = [
   { key: 'nav-customer-portal', href: '/customer-portal', icon: UserCircle, label: 'Customer Portal' },
   { key: 'nav-products', href: '/products', icon: Package, label: 'Products', badge: 'stock' },
   { key: 'nav-inventory', href: '/inventory', icon: Warehouse, label: 'Inventory' },
+  { key: 'nav-purchase-orders', href: '/purchase-orders', icon: CreditCard, label: 'Purchase Orders' },
   { key: 'nav-drivers', href: '/drivers', icon: Truck, label: 'Drivers' },
   { key: 'nav-staff', href: '/staff-management', icon: UserCog, label: 'Staff' },
   { key: 'nav-reports', href: '/reports', icon: BarChart3, label: 'Reports' },
@@ -67,7 +68,7 @@ export default function BusinessSidebar({
               {logoUrl ? (
                 <img src={logoUrl} alt={businessName} className="w-full h-full object-contain rounded-lg" />
               ) : (
-                <AppLogo size={28} src="/assets/images/app_logo.png" />
+                <span className="text-white font-black text-xs tracking-tight leading-none">W·IN</span>
               )}
             </div>
             <div className="min-w-0">
@@ -80,7 +81,7 @@ export default function BusinessSidebar({
             {logoUrl ? (
               <img src={logoUrl} alt={businessName} className="w-full h-full object-contain rounded-lg" />
             ) : (
-              <AppLogo size={28} src="/assets/images/app_logo.png" />
+              <span className="text-white font-black text-xs tracking-tight leading-none">W·IN</span>
             )}
           </div>
         )}
