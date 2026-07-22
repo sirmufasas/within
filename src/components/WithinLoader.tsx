@@ -92,7 +92,7 @@ export default function WithinLoader({ message = 'Loading your workspace...' }: 
             }}
           >
             <img
-              src="/assets/images/IMG-20260712-WA0001-1784701905533.jpg"
+              src="/assets/images/download-1784730896538.png"
               alt="WITH-IN Logo"
               className="w-16 h-16 object-contain"
             />

@@ -248,7 +248,7 @@ export default function SignUpLoginContent() {
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center overflow-hidden">
               <img
-                src="/assets/images/IMG-20260712-WA0001-1784701905533.jpg"
+                src="/assets/images/download-1784730896538.png"
                 alt="WITH-IN Logo"
                 className="w-9 h-9 object-contain"
               />
@@ -312,7 +312,7 @@ export default function SignUpLoginContent() {
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 within-gradient rounded-lg flex items-center justify-center overflow-hidden">
               <img
-                src="/assets/images/IMG-20260712-WA0001-1784701905533.jpg"
+                src="/assets/images/download-1784730896538.png"
                 alt="WITH-IN"
                 className="w-6 h-6 object-contain"
               />

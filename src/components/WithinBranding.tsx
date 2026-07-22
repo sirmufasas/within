@@ -17,7 +17,7 @@ function WithinLogoBadge({ size = 20 }: { size?: number }) {
       }}
     >
       <img
-        src="/assets/images/IMG-20260712-WA0001-1784701905533.jpg"
+        src="/assets/images/download-1784730896538.png"
         alt="WITH-IN"
         style={{ width: size * 0.8, height: size * 0.8, objectFit: 'contain' }}
       />

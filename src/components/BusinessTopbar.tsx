@@ -45,7 +45,7 @@ export default function BusinessTopbar({
             <img src={businessLogo} alt={businessName} className="w-full h-full object-contain" />
           ) : (
             <img
-              src="/assets/images/IMG-20260712-WA0001-1784701905533.jpg"
+              src="/assets/images/download-1784730896538.png"
               alt="WITH-IN"
               className="w-5 h-5 object-contain"
             />
