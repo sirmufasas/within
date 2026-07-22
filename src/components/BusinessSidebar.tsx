@@ -6,7 +6,7 @@ import {
   LayoutDashboard, ShoppingCart, Users, Package,
   Truck, BarChart3, Settings, ChevronLeft, ChevronRight,
   Bell, LogOut, X, CreditCard, Warehouse, UserCircle, UserCog,
-  MapPin, LineChart,
+  MapPin, LineChart, FileText,
 } from 'lucide-react';
 
 import WithinBranding from '@/components/WithinBranding';
@@ -31,7 +31,8 @@ const navItems = [
   { key: 'nav-customer-analytics', href: '/customer-analytics', icon: LineChart, label: 'Customer Analytics' },
   { key: 'nav-customer-portal', href: '/customer-portal', icon: UserCircle, label: 'Customer Portal' },
   { key: 'nav-products', href: '/products', icon: Package, label: 'Products', badge: 'stock' },
-  { key: 'nav-inventory', href: '/inventory', icon: Warehouse, label: 'Inventory' },
+  { key: 'nav-inventory', href: '/inventory', icon: Warehouse, label: 'Stocks' },
+  { key: 'nav-estimates', href: '/estimates', icon: FileText, label: 'Estimates' },
   { key: 'nav-purchase-orders', href: '/purchase-orders', icon: CreditCard, label: 'Purchase Orders' },
   { key: 'nav-drivers', href: '/drivers', icon: Truck, label: 'Drivers' },
   { key: 'nav-staff', href: '/staff-management', icon: UserCog, label: 'Staff' },
