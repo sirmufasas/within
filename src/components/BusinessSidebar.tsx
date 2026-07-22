@@ -8,7 +8,7 @@ import {
   Bell, LogOut, X, CreditCard, Warehouse, UserCircle, UserCog,
   MapPin, LineChart,
 } from 'lucide-react';
-import AppLogo from '@/components/ui/AppLogo';
+
 import WithinBranding from '@/components/WithinBranding';
 
 interface SidebarProps {
@@ -67,7 +67,7 @@ export default function BusinessSidebar({
               {logoUrl ? (
                 <img src={logoUrl} alt={businessName} className="w-full h-full object-contain rounded-lg" />
               ) : (
-                <AppLogo size={28} src="/assets/images/app_logo.png" />
+                <img src="/assets/images/app_logo.png" alt="WITH-IN" className="w-7 h-7 object-contain" />
               )}
             </div>
             <div className="min-w-0">
@@ -80,7 +80,7 @@ export default function BusinessSidebar({
             {logoUrl ? (
               <img src={logoUrl} alt={businessName} className="w-full h-full object-contain rounded-lg" />
             ) : (
-              <AppLogo size={28} src="/assets/images/app_logo.png" />
+              <img src="/assets/images/app_logo.png" alt="WITH-IN" className="w-7 h-7 object-contain" />
             )}
           </div>
         )}
