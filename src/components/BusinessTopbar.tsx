@@ -89,7 +89,7 @@ export default function BusinessTopbar({
                 Business Settings
               </Link>
               <Link
-                href="/settings"
+                href="/profile"
                 className="flex items-center gap-2 px-4 py-3 text-sm text-secondary-foreground hover:bg-muted hover:text-foreground transition-colors"
                 onClick={() => setShowUserMenu(false)}
               >

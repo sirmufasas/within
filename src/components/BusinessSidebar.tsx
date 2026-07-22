@@ -32,6 +32,7 @@ const navItems = [
   { key: 'nav-customer-portal', href: '/customer-portal', icon: UserCircle, label: 'Customer Portal' },
   { key: 'nav-products', href: '/products', icon: Package, label: 'Products', badge: 'stock' },
   { key: 'nav-inventory', href: '/inventory', icon: Warehouse, label: 'Inventory' },
+  { key: 'nav-purchase-orders', href: '/purchase-orders', icon: CreditCard, label: 'Purchase Orders' },
   { key: 'nav-drivers', href: '/drivers', icon: Truck, label: 'Drivers' },
   { key: 'nav-staff', href: '/staff-management', icon: UserCog, label: 'Staff' },
   { key: 'nav-reports', href: '/reports', icon: BarChart3, label: 'Reports' },

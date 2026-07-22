@@ -247,12 +247,7 @@ export default function SignUpLoginContent() {
           {/* Logo */}
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center overflow-hidden">
-              <img
-                src="/assets/images/IMG-20260712-WA0001-1784701905533.jpg"
-                alt="WITH-IN Logo"
-                className="w-10 h-10 object-contain"
-                style={{ filter: 'brightness(0) invert(1)' }}
-              />
+              <span className="text-white font-black tracking-tight leading-none select-none" style={{ fontSize: '13px' }}>W·IN</span>
             </div>
             <div>
               <p className="text-white text-xl font-bold leading-tight">WITH-IN</p>
@@ -312,12 +307,7 @@ export default function SignUpLoginContent() {
         <div className="lg:hidden flex items-center justify-between p-4 border-b border-border">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 within-gradient rounded-lg flex items-center justify-center overflow-hidden">
-              <img
-                src="/assets/images/IMG-20260712-WA0001-1784701905533.jpg"
-                alt="WITH-IN"
-                className="w-6 h-6 object-contain"
-                style={{ filter: 'brightness(0) invert(1)' }}
-              />
+              <span className="text-white font-black tracking-tight leading-none select-none" style={{ fontSize: '9px' }}>W·IN</span>
             </div>
             <span className="font-bold text-foreground">WITH-IN</span>
           </div>
