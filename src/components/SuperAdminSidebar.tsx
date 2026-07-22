@@ -2,7 +2,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Building2, CreditCard, Users, BarChart3, Settings, ChevronLeft, ChevronRight, Bell, LogOut, Activity, X } from 'lucide-react';
+import { LayoutDashboard, Building2, CreditCard, Users, BarChart3, Settings, ChevronLeft, ChevronRight, Bell, LogOut, Activity, X, Shield } from 'lucide-react';
 import WithinBranding from '@/components/WithinBranding';
 
 interface SuperAdminSidebarProps {
@@ -48,7 +48,7 @@ export default function SuperAdminSidebar({
         {!collapsed ? (
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 within-gradient rounded-lg flex items-center justify-center flex-shrink-0">
-              <span className="text-white font-black text-xs tracking-tighter leading-none">W·IN</span>
+              <Shield size={16} className="text-white" />
             </div>
             <div>
               <p className="text-sm font-bold text-foreground leading-tight">WITH-IN</p>
@@ -57,7 +57,7 @@ export default function SuperAdminSidebar({
           </div>
         ) : (
           <div className="w-8 h-8 within-gradient rounded-lg flex items-center justify-center">
-            <span className="text-white font-black text-xs tracking-tighter leading-none">W·IN</span>
+            <Shield size={16} className="text-white" />
           </div>
         )}
         {!collapsed && (

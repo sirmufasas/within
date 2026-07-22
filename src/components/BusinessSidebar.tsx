@@ -6,7 +6,9 @@ import {
   LayoutDashboard, ShoppingCart, Users, Package,
   Truck, BarChart3, Settings, ChevronLeft, ChevronRight,
   Bell, LogOut, X, CreditCard, Warehouse, UserCircle, UserCog,
+  MapPin, LineChart,
 } from 'lucide-react';
+import AppLogo from '@/components/ui/AppLogo';
 import WithinBranding from '@/components/WithinBranding';
 
 interface SidebarProps {
@@ -24,7 +26,9 @@ interface SidebarProps {
 const navItems = [
   { key: 'nav-dashboard', href: '/business-admin-dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { key: 'nav-orders', href: '/orders', icon: ShoppingCart, label: 'Orders', badge: 'orders' },
+  { key: 'nav-order-tracking', href: '/order-tracking', icon: MapPin, label: 'Order Tracking' },
   { key: 'nav-customers', href: '/customers', icon: Users, label: 'Customers' },
+  { key: 'nav-customer-analytics', href: '/customer-analytics', icon: LineChart, label: 'Customer Analytics' },
   { key: 'nav-customer-portal', href: '/customer-portal', icon: UserCircle, label: 'Customer Portal' },
   { key: 'nav-products', href: '/products', icon: Package, label: 'Products', badge: 'stock' },
   { key: 'nav-inventory', href: '/inventory', icon: Warehouse, label: 'Inventory' },
@@ -59,12 +63,11 @@ export default function BusinessSidebar({
       <div className={`flex items-center border-b border-border h-16 px-3 ${collapsed ? 'justify-center' : 'justify-between'}`}>
         {!collapsed ? (
           <div className="flex items-center gap-2.5 min-w-0">
-            {/* WITH-IN text logo */}
-            <div className="w-9 h-9 rounded-lg flex-shrink-0 within-gradient flex items-center justify-center">
+            <div className="w-9 h-9 rounded-lg flex-shrink-0 within-gradient flex items-center justify-center overflow-hidden">
               {logoUrl ? (
                 <img src={logoUrl} alt={businessName} className="w-full h-full object-contain rounded-lg" />
               ) : (
-                <span className="text-white font-black text-xs tracking-tighter leading-none">W·IN</span>
+                <AppLogo size={28} src="/assets/images/app_logo.png" />
               )}
             </div>
             <div className="min-w-0">
@@ -73,11 +76,11 @@ export default function BusinessSidebar({
             </div>
           </div>
         ) : (
-          <div className="w-9 h-9 rounded-lg within-gradient flex items-center justify-center">
+          <div className="w-9 h-9 rounded-lg within-gradient flex items-center justify-center overflow-hidden">
             {logoUrl ? (
               <img src={logoUrl} alt={businessName} className="w-full h-full object-contain rounded-lg" />
             ) : (
-              <span className="text-white font-black text-xs tracking-tighter leading-none">W·IN</span>
+              <AppLogo size={28} src="/assets/images/app_logo.png" />
             )}
           </div>
         )}

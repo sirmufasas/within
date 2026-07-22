@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { Bell, ChevronDown, Menu, LogOut, Settings, User } from 'lucide-react';
 import Link from 'next/link';
+import AppLogo from '@/components/ui/AppLogo';
 import WithinBranding from '@/components/WithinBranding';
 
 interface BusinessTopbarProps {
@@ -43,7 +44,7 @@ export default function BusinessTopbar({
           {businessLogo ? (
             <img src={businessLogo} alt={businessName} className="w-full h-full object-contain" />
           ) : (
-            <span className="text-white font-black text-xs tracking-tighter leading-none">W·IN</span>
+            <AppLogo size={24} src="/assets/images/app_logo.png" />
           )}
         </div>
         <div className="min-w-0">
