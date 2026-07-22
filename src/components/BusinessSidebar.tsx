@@ -37,7 +37,7 @@ const navItems = [
   { key: 'nav-staff', href: '/staff-management', icon: UserCog, label: 'Staff' },
   { key: 'nav-reports', href: '/reports', icon: BarChart3, label: 'Reports' },
   { key: 'nav-subscription', href: '/subscription', icon: CreditCard, label: 'Subscription' },
-  { key: 'nav-settings', href: '/settings', icon: Settings, label: 'Settings' },
+  { key: 'nav-settings', href: '/business-settings', icon: Settings, label: 'Settings' },
 ];
 
 export default function BusinessSidebar({
@@ -68,7 +68,12 @@ export default function BusinessSidebar({
               {logoUrl ? (
                 <img src={logoUrl} alt={businessName} className="w-full h-full object-contain rounded-lg" />
               ) : (
-                <span className="text-white font-black text-xs tracking-tight leading-none">W·IN</span>
+                <img
+                  src="/assets/images/IMG-20260712-WA0001-1784701905533.jpg"
+                  alt="WITH-IN"
+                  className="w-6 h-6 object-contain"
+                  style={{ filter: 'brightness(0) invert(1)' }}
+                />
               )}
             </div>
             <div className="min-w-0">
@@ -81,7 +86,12 @@ export default function BusinessSidebar({
             {logoUrl ? (
               <img src={logoUrl} alt={businessName} className="w-full h-full object-contain rounded-lg" />
             ) : (
-              <span className="text-white font-black text-xs tracking-tight leading-none">W·IN</span>
+              <img
+                src="/assets/images/IMG-20260712-WA0001-1784701905533.jpg"
+                alt="WITH-IN"
+                className="w-6 h-6 object-contain"
+                style={{ filter: 'brightness(0) invert(1)' }}
+              />
             )}
           </div>
         )}

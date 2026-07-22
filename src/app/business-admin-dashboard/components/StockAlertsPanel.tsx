@@ -1,6 +1,7 @@
 import React from 'react';
 import { AlertTriangle, Package, TrendingDown } from 'lucide-react';
 import Badge from '@/components/ui/Badge';
+import Link from 'next/link';
 
 const stockAlerts = [
   {
@@ -54,9 +55,9 @@ export default function StockAlertsPanel() {
             <p className="text-xs text-muted-foreground">4 items need attention</p>
           </div>
         </div>
-        <button className="text-sm text-primary font-medium hover:underline">
+        <Link href="/inventory" className="text-sm text-primary font-medium hover:underline">
           View all
-        </button>
+        </Link>
       </div>
       <div className="divide-y divide-border">
         {stockAlerts.map((item) => (
@@ -76,10 +77,10 @@ export default function StockAlertsPanel() {
         ))}
       </div>
       <div className="px-4 sm:px-5 py-3 border-t border-border bg-muted/20">
-        <button className="btn-secondary w-full text-sm py-2.5">
+        <Link href="/purchase-orders" className="btn-secondary w-full text-sm py-2.5 flex items-center justify-center gap-2">
           <Package size={15} />
           Create Purchase Order
-        </button>
+        </Link>
       </div>
     </div>
   );

@@ -91,12 +91,12 @@ export default function WithinLoader({ message = 'Loading your workspace...' }: 
               boxShadow: '0 0 40px rgba(79,70,229,0.5), inset 0 1px 0 rgba(255,255,255,0.1)',
             }}
           >
-            <span
-              className="text-white font-black tracking-tight leading-none select-none"
-              style={{ fontSize: '22px', letterSpacing: '-0.02em' }}
-            >
-              W·IN
-            </span>
+            <img
+              src="/assets/images/IMG-20260712-WA0001-1784701905533.jpg"
+              alt="WITH-IN Logo"
+              className="w-16 h-16 object-contain"
+              style={{ filter: 'brightness(0) invert(1)' }}
+            />
           </div>
         </div>
 
