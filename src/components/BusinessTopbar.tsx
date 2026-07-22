@@ -44,7 +44,11 @@ export default function BusinessTopbar({
           {businessLogo ? (
             <img src={businessLogo} alt={businessName} className="w-full h-full object-contain" />
           ) : (
-            <span className="text-white font-black text-xs tracking-tight leading-none">W·IN</span>
+            <img
+              src="/assets/images/IMG-20260712-WA0001-1784701905533.jpg"
+              alt="WITH-IN"
+              className="w-5 h-5 object-contain"
+            />
           )}
         </div>
         <div className="min-w-0">
@@ -54,10 +58,13 @@ export default function BusinessTopbar({
       </div>
 
       <div className="flex items-center gap-2 ml-auto">
-        <button className="relative p-2.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-all min-w-[44px] min-h-[44px] flex items-center justify-center">
+        <Link
+          href="/notifications"
+          className="relative p-2.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-all min-w-[44px] min-h-[44px] flex items-center justify-center"
+        >
           <Bell size={20} />
           <span className="absolute top-2 right-2 w-2 h-2 bg-danger rounded-full" />
-        </button>
+        </Link>
 
         <div className="relative">
           <button
@@ -81,7 +88,7 @@ export default function BusinessTopbar({
                 <p className="text-xs text-muted-foreground capitalize">{ownerRole}</p>
               </div>
               <Link
-                href="/settings"
+                href="/business-settings"
                 className="flex items-center gap-2 px-4 py-3 text-sm text-secondary-foreground hover:bg-muted hover:text-foreground transition-colors"
                 onClick={() => setShowUserMenu(false)}
               >

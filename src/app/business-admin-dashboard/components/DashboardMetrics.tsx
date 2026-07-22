@@ -1,4 +1,5 @@
 import React from 'react';
+import Link from 'next/link';
 import {
   ShoppingCart, Clock, Euro, AlertTriangle,
   Users, Truck,
@@ -14,6 +15,7 @@ const metrics = [
     icon: ShoppingCart,
     iconBg: 'bg-primary/10',
     iconColor: 'text-primary',
+    href: '/orders',
   },
   {
     id: 'metric-pending',
@@ -25,6 +27,7 @@ const metrics = [
     iconBg: 'bg-warning/10',
     iconColor: 'text-warning',
     alert: true,
+    href: '/orders',
   },
   {
     id: 'metric-revenue',
@@ -35,6 +38,7 @@ const metrics = [
     icon: Euro,
     iconBg: 'bg-success/10',
     iconColor: 'text-success',
+    href: '/reports',
   },
   {
     id: 'metric-stock-alerts',
@@ -46,6 +50,7 @@ const metrics = [
     iconBg: 'bg-danger/10',
     iconColor: 'text-danger',
     alert: true,
+    href: '/inventory',
   },
   {
     id: 'metric-customers',
@@ -56,6 +61,7 @@ const metrics = [
     icon: Users,
     iconBg: 'bg-accent/10',
     iconColor: 'text-accent',
+    href: '/customers',
   },
   {
     id: 'metric-deliveries',
@@ -66,6 +72,7 @@ const metrics = [
     icon: Truck,
     iconBg: 'bg-violet-100',
     iconColor: 'text-violet-600',
+    href: '/order-tracking',
   },
 ];
 
@@ -81,9 +88,10 @@ export default function DashboardMetrics() {
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4">
       {metrics.map((metric) => (
-        <div
+        <Link
           key={metric.id}
-          className={`card-base p-4 sm:p-5 ${metric.alert ? 'border-warning/40 bg-warning/5' : ''} hover:shadow-card-hover transition-shadow duration-200`}
+          href={metric.href}
+          className={`card-base p-4 sm:p-5 ${metric.alert ? 'border-warning/40 bg-warning/5' : ''} hover:shadow-card-hover transition-all duration-200 hover:scale-[1.02] cursor-pointer block`}
         >
           <div className="flex items-start justify-between mb-3">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide leading-tight">{metric.label}</p>
@@ -95,7 +103,7 @@ export default function DashboardMetrics() {
           <p className={`text-xs mt-1.5 font-medium ${changeColors[metric.changeType as keyof typeof changeColors]}`}>
             {metric.change}
           </p>
-        </div>
+        </Link>
       ))}
     </div>
   );
