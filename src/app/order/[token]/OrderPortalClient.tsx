@@ -28,6 +28,7 @@ interface Props {
   logoUrl: string | null;
   primaryColor: string;
   customerName: string;
+  maxProducts: number | null;
   products: PortalProduct[];
   history: PortalHistoryOrder[];
   forDateIso: string;
@@ -46,7 +47,7 @@ const statusColors: Record<string, string> = {
 };
 
 export default function OrderPortalClient({
-  token, businessName, logoUrl, primaryColor, customerName, products, history, forDateLabel,
+  token, businessName, logoUrl, primaryColor, customerName, maxProducts, products, history, forDateLabel,
 }: Props) {
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [tab, setTab] = useState<'products' | 'history'>('products');
@@ -59,9 +60,15 @@ export default function OrderPortalClient({
   const usedCount = useMemo(() => Object.values(quantities).filter((q) => q > 0).length, [quantities]);
 
   const setQty = (id: string, qty: number) => {
+    const safeQty = Math.max(0, qty);
+    const isNewProduct = safeQty > 0 && !(quantities[id] > 0);
+    if (isNewProduct && maxProducts && usedCount >= maxProducts) {
+      setError(`You can only order up to ${maxProducts} different products at once.`);
+      return;
+    }
     setError(null);
     setSuccessMsg(null);
-    setQuantities((q) => ({ ...q, [id]: Math.max(0, qty) }));
+    setQuantities((q) => ({ ...q, [id]: safeQty }));
   };
 
   const handleSubmit = () => {
@@ -149,7 +156,9 @@ export default function OrderPortalClient({
             ) : (
               <>
                 <p className="text-xs text-neutral-500">
-                  {usedCount} of {products.length} products used · {products.length - usedCount} left
+                  {maxProducts
+                    ? `${usedCount} of ${maxProducts} products used · ${Math.max(0, maxProducts - usedCount)} left`
+                    : `${usedCount} product${usedCount !== 1 ? 's' : ''} selected`}
                 </p>
                 <div className="space-y-2">
                   {visibleProducts.map((p) => {
