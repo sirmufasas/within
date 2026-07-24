@@ -373,7 +373,55 @@ no page reload needed.
 
 Verified with a full production build, before and after.
 
-## 24. Still mock-only (not touched this pass)
+## 25. Fixed real causes of perceived lag, plus sidebar active state
+
+**Found and fixed three real issues**, not just cosmetic tweaks:
+
+1. **`middleware.ts` was making a real network round-trip to Supabase's auth
+   server on almost every click** — including your public customer order
+   links and the login/signup page, which never needed it. Every navigation
+   was paying that latency. Now skips the auth check entirely on `/order/*`
+   and the root login/signup page.
+2. **`package.json`'s `"start"` script was actually running the dev server**
+   (`next dev`), not a production server (`next start`). Dev mode is always
+   noticeably slower — every route recompiles the first time you visit it,
+   plus React's dev-mode overhead. Fixed to run `next start` properly.
+3. **Sidebar active-state highlight was too subtle to register as "selected"**
+   — just a faint tinted background. Strengthened to a clear gray background
+   with bold, theme-colored text, matching what you asked for.
+
+**Important, please check this yourself:** if you've been testing inside
+Rocket's live preview (not your actual deployed Netlify site), what you're
+feeling may be **inherent Next.js dev-server behavior**, not a bug — dev mode
+is always slower than production, by design, everywhere, for every Next.js
+app. The real test is your deployed Netlify URL (which builds with `next
+build` via the `netlify.toml` I added, always producing the fast, optimized
+version) — if it's still laggy there after these fixes, that's a genuine
+issue and I'd want the specific page/action that's slow to dig further.
+
+## 27. Purchase Orders + Suppliers — wired to real data, closes the Inventory loop
+
+`src/app/purchase-orders/page.tsx` rewritten against the real
+`suppliers`/`purchase_orders`/`purchase_order_items` schema.
+
+- **Suppliers**: full CRUD (add/edit/deactivate), with real order count and
+  total spent computed from actual purchase order history
+- **Purchase Orders**: create with real line items (product + quantity + unit
+  cost, auto-filled from the product's cost price), status workflow
+  (draft/sent/partial/received/cancelled) via inline dropdown
+- **"Receive" actually creates real stock** — this is the piece that closes
+  the loop with Inventory. Confirming receipt creates real `stock_batches`
+  rows (visible immediately on the Products/Inventory pages) and matching
+  `stock_movements` audit entries, updates how much of each line item has
+  been received, and automatically marks the PO `partial` or `received`
+  depending on whether everything ordered has arrived yet.
+
+Not tested against your live database — same standing caveat as everything
+else. The receiving flow in particular does several sequential writes (batch,
+movement, item update, PO status) — if anything in that chain errors partway
+through, send me the exact message and I'll check the sequence.
+
+## 28. Still mock-only (not touched this pass)
 customers, orders, products, inventory, estimates, purchase-orders (the table data),
 staff-management, subscription, customer-portal (all sub-pages), and every
 super-admin-panel screen. These all look finished in the UI but write to local
