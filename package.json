@@ -44,7 +44,7 @@
   "scripts": {
     "dev": "next dev -p 4028",
     "build": "next build",
-    "start": "next dev -p 4028",
+    "start": "next start -p 4028",
     "lint": "next lint",
     "lint:fix": "next lint --fix",
     "format": "prettier --write \"src/**/*.{ts,tsx,css,md,json}\"",
@@ -58,6 +58,7 @@
     "@supabase/supabase-js": "^2.49.4",
     "@tailwindcss/forms": "^0.5.10",
     "@tailwindcss/typography": "^0.5.16",
+    "googleapis": "^173.0.0",
     "jspdf": "4.2.1",
     "jspdf-autotable": "5.0.8",
     "lucide-react": "^1.7.0",

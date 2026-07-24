@@ -27,7 +27,7 @@ export default async function CustomerOrderPortalPage({ params }: { params: Prom
   }
 
   const [businessRes, customerRes, curatedRes, historyRes] = await Promise.all([
-    supabase.from('businesses').select('name, logo_url, primary_color, secondary_color').eq('id', access.business_id).single(),
+    supabase.from('businesses').select('name, logo_url, primary_color, secondary_color, max_order_products').eq('id', access.business_id).single(),
     supabase.from('customers').select('name').eq('id', access.customer_id).single(),
     supabase
       .from('customer_products')
@@ -73,6 +73,7 @@ export default async function CustomerOrderPortalPage({ params }: { params: Prom
       logoUrl={businessRes.data?.logo_url || null}
       primaryColor={businessRes.data?.primary_color || '#4F46E5'}
       customerName={customerRes.data?.name || 'Customer'}
+      maxProducts={businessRes.data?.max_order_products ?? null}
       products={products}
       history={history}
       forDateIso={iso}

@@ -6,10 +6,11 @@ import {
   LayoutDashboard, ShoppingCart, Users, Package,
   Truck, BarChart3, Settings, ChevronLeft, ChevronRight,
   Bell, LogOut, X, CreditCard, Warehouse, UserCircle, UserCog,
-  MapPin, LineChart, FileText,
+  MapPin, LineChart, FileText, Sheet,
 } from 'lucide-react';
 
 import WithinBranding from '@/components/WithinBranding';
+import { hasRouteAccess } from '@/lib/planAccess';
 
 interface SidebarProps {
   collapsed: boolean;
@@ -18,6 +19,7 @@ interface SidebarProps {
   businessName: string;
   businessType: string;
   logoUrl?: string | null;
+  plan?: string | null;
   pendingOrders: number;
   stockAlerts: number;
   onSignOut?: () => void;
@@ -32,6 +34,7 @@ const navItems = [
   { key: 'nav-customer-portal', href: '/customer-portal', icon: UserCircle, label: 'Customer Portal' },
   { key: 'nav-products', href: '/products', icon: Package, label: 'Products', badge: 'stock' },
   { key: 'nav-inventory', href: '/inventory', icon: Warehouse, label: 'Stocks' },
+  { key: 'nav-stock-sheet', href: '/stock-sheet', icon: Sheet, label: 'Stock Sheet (Google)' },
   { key: 'nav-estimates', href: '/estimates', icon: FileText, label: 'Estimates' },
   { key: 'nav-purchase-orders', href: '/purchase-orders', icon: CreditCard, label: 'Purchase Orders' },
   { key: 'nav-drivers', href: '/drivers', icon: Truck, label: 'Drivers' },
@@ -43,10 +46,11 @@ const navItems = [
 
 export default function BusinessSidebar({
   collapsed, onToggle, onMobileClose,
-  businessName, businessType, logoUrl,
+  businessName, businessType, logoUrl, plan,
   pendingOrders, stockAlerts, onSignOut,
 }: SidebarProps) {
   const pathname = usePathname();
+  const visibleNavItems = navItems.filter((item) => hasRouteAccess(plan, item.href));
 
   const getBadge = (badgeKey?: string) => {
     if (badgeKey === 'orders' && pendingOrders > 0) return pendingOrders;
@@ -114,7 +118,7 @@ export default function BusinessSidebar({
 
       {/* Nav Items */}
       <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-0.5">
-        {navItems.map((item) => {
+        {visibleNavItems.map((item) => {
           const active = isActive(item.href);
           const badge = getBadge(item.badge);
           return (

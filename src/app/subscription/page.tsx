@@ -3,28 +3,16 @@ import React, { useState } from 'react';
 import BusinessLayout from '@/components/BusinessLayout';
 
 export const dynamic = 'force-dynamic';
-import { CheckCircle, AlertTriangle, Clock, XCircle, Download } from 'lucide-react';
+import { CheckCircle, AlertTriangle, Clock, XCircle, Download, LayoutGrid, FlaskConical, Eye, X, Lock } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { createClient } from '@/lib/supabase/client';
+import { toast } from 'sonner';
+import { screensForPlan, ALL_SCREENS, planLabel, type Plan } from '@/lib/planAccess';
 
 const plans = [
-  {
-    name: 'Starter',
-    price: 299,
-    features: ['Up to 3 users', '50 products', 'Orders & Customers', 'Basic Reports'],
-    recommended: false,
-  },
-  {
-    name: 'Professional',
-    price: 599,
-    features: ['Up to 10 users', '500 products', 'Full Inventory', 'Advanced Reports', 'Multi-location'],
-    recommended: true,
-  },
-  {
-    name: 'Enterprise',
-    price: 1299,
-    features: ['Unlimited users', 'Unlimited products', 'All features', 'API Access', 'Priority Support'],
-    recommended: false,
-  },
+  { name: 'Starter', price: 299, recommended: false },
+  { name: 'Professional', price: 599, recommended: true },
+  { name: 'Enterprise', price: 1299, recommended: false },
 ];
 
 const mockBillingHistory = [
@@ -41,9 +29,31 @@ const statusConfig: Record<string, { label: string; color: string; icon: React.R
 };
 
 export default function SubscriptionPage() {
-  const { business } = useAuth();
+  const { business, refreshBusiness } = useAuth();
+  const supabase = createClient();
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<typeof plans[0] | null>(null);
+  const [switching, setSwitching] = useState(false);
+  const [previewPlan, setPreviewPlan] = useState<Plan | null>(null);
+
+  const handleConfirmSwitch = async () => {
+    if (!business?.id || !selectedPlan) return;
+    setSwitching(true);
+    try {
+      const { error } = await supabase
+        .from('businesses')
+        .update({ plan: selectedPlan.name.toLowerCase() })
+        .eq('id', business.id);
+      if (error) throw error;
+      await refreshBusiness();
+      toast.success(`Switched to ${selectedPlan.name} \u2014 no real payment was taken`);
+      setShowUpgradeModal(false);
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to switch plan');
+    } finally {
+      setSwitching(false);
+    }
+  };
 
   const subscriptionStatus = (business?.subscription_status || 'trial') as keyof typeof statusConfig;
   const currentPlan = business?.plan || 'starter';
@@ -61,6 +71,13 @@ export default function SubscriptionPage() {
             <h1 className="text-2xl font-bold text-foreground">Subscription</h1>
             <p className="text-sm text-muted-foreground mt-0.5">Manage your plan and billing</p>
           </div>
+        </div>
+
+        <div className="flex items-center gap-2 px-4 py-2.5 bg-warning/10 border border-warning/30 rounded-xl">
+          <FlaskConical size={15} className="text-warning flex-shrink-0" />
+          <p className="text-xs text-foreground">
+            <span className="font-semibold">Test mode.</span> No payment provider is connected yet \u2014 switching plans here is free and instant, just to try out how each plan looks and feels.
+          </p>
         </div>
 
         {/* Current Status Banner */}
@@ -126,6 +143,8 @@ export default function SubscriptionPage() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {plans.map((plan) => {
               const isCurrent = plan.name.toLowerCase() === currentPlan;
+              const planKey = plan.name.toLowerCase() as Plan;
+              const includedScreens = screensForPlan(planKey);
               return (
                 <div
                   key={plan.name}
@@ -145,14 +164,26 @@ export default function SubscriptionPage() {
                       <span className="text-muted-foreground text-sm">/month</span>
                     </div>
                   </div>
-                  <ul className="space-y-2 mb-6">
-                    {plan.features.map((f, i) => (
-                      <li key={i} className="flex items-center gap-2 text-sm text-secondary-foreground">
-                        <CheckCircle size={14} className="text-success flex-shrink-0" />
-                        {f}
-                      </li>
-                    ))}
-                  </ul>
+                  <div className="mb-5">
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2 flex items-center gap-1.5">
+                      <LayoutGrid size={12} />
+                      {includedScreens.length} of {ALL_SCREENS.length} screens included
+                    </p>
+                    <ul className="space-y-1.5">
+                      {includedScreens.map((screen) => (
+                        <li key={screen.label} className="flex items-center gap-2 text-sm text-secondary-foreground">
+                          <screen.icon size={14} className="text-success flex-shrink-0" />
+                          {screen.label}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  <button
+                    onClick={() => setPreviewPlan(planKey)}
+                    className="w-full text-xs py-2 mb-3 rounded-lg font-medium border border-border text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-all flex items-center justify-center gap-1.5"
+                  >
+                    <Eye size={13} /> Preview this plan
+                  </button>
                   <button
                     onClick={() => { setSelectedPlan(plan); setShowUpgradeModal(true); }}
                     disabled={isCurrent}
@@ -173,8 +204,9 @@ export default function SubscriptionPage() {
 
         {/* Billing History */}
         <div className="card-base overflow-hidden">
-          <div className="p-4 border-b border-border">
+          <div className="p-4 border-b border-border flex items-center justify-between">
             <h3 className="font-semibold text-foreground">Billing History</h3>
+            <span className="text-xs text-muted-foreground italic">Example data \u2014 not connected to real billing yet</span>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full">
@@ -223,12 +255,18 @@ export default function SubscriptionPage() {
         {/* Upgrade Modal */}
         {showUpgradeModal && (
           <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 fade-in" onClick={() => setShowUpgradeModal(false)}>
-            <div className="bg-card rounded-2xl shadow-xl w-full max-w-md p-6 slide-up" onClick={(e) => e.stopPropagation()}>
+            <div className="bg-card rounded-2xl shadow-xl w-full max-w-md p-6 slide-up border-2 border-dashed border-warning/40" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center gap-2 mb-4 px-3 py-2 bg-warning/10 rounded-lg">
+                <FlaskConical size={15} className="text-warning flex-shrink-0" />
+                <p className="text-xs font-semibold text-warning">
+                  Test mode \u2014 no real payment provider connected yet. This just lets you try switching plans.
+                </p>
+              </div>
               <h3 className="text-lg font-bold text-foreground mb-2">
-                Upgrade to {selectedPlan?.name || 'Professional'}
+                Switch to {selectedPlan?.name || 'Professional'}
               </h3>
               <p className="text-sm text-muted-foreground mb-6">
-                Payment integration coming soon. Your plan will be activated once payment is processed.
+                Fill in anything below (it's not sent anywhere) and confirm to actually switch your plan and see the real screen access change.
               </p>
               <div className="p-4 bg-muted/30 rounded-xl mb-6">
                 <div className="flex items-center justify-between">
@@ -236,33 +274,101 @@ export default function SubscriptionPage() {
                   <span className="font-bold text-foreground">R {selectedPlan?.price || 599}/month</span>
                 </div>
               </div>
-              <div className="space-y-3 mb-6">
+              <div className="space-y-3 mb-4">
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-1.5">Card Number</label>
-                  <input type="text" className="input-field" placeholder="•••• •••• •••• ••••" disabled />
+                  <label className="block text-sm font-medium text-foreground mb-1.5">Card Number <span className="text-xs text-muted-foreground font-normal">(placeholder \u2014 not real)</span></label>
+                  <input type="text" className="input-field" placeholder="4242 4242 4242 4242" />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-sm font-medium text-foreground mb-1.5">Expiry</label>
-                    <input type="text" className="input-field" placeholder="MM/YY" disabled />
+                    <input type="text" className="input-field" placeholder="12/28" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-foreground mb-1.5">CVV</label>
-                    <input type="text" className="input-field" placeholder="•••" disabled />
+                    <input type="text" className="input-field" placeholder="123" />
                   </div>
                 </div>
               </div>
               <p className="text-xs text-muted-foreground text-center mb-4">
-                🔒 Payment processing coming soon — architecture ready
+                No card data is validated, stored, or sent anywhere \u2014 payment processing isn't wired up yet.
               </p>
               <div className="flex gap-3">
                 <button onClick={() => setShowUpgradeModal(false)} className="btn-secondary flex-1 text-sm">Cancel</button>
-                <button onClick={() => setShowUpgradeModal(false)} className="btn-primary flex-1 text-sm">Coming Soon</button>
+                <button
+                  onClick={handleConfirmSwitch}
+                  disabled={switching}
+                  className="btn-primary flex-1 text-sm flex items-center justify-center gap-2"
+                >
+                  {switching && <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
+                  {switching ? 'Switching...' : 'Confirm Switch (Test)'}
+                </button>
               </div>
             </div>
           </div>
         )}
       </div>
+
+      {/* PLAN PREVIEW — a real mockup of the sidebar, not a video, showing exactly
+          which screens are unlocked vs locked for the plan being considered. */}
+      {previewPlan && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 fade-in" onClick={() => setPreviewPlan(null)}>
+          <div className="bg-card rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden slide-up" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-5 border-b border-border">
+              <div>
+                <h3 className="text-lg font-bold text-foreground">{planLabel(previewPlan)} plan preview</h3>
+                <p className="text-xs text-muted-foreground mt-0.5">This is exactly what your sidebar would look like \u2014 nothing simulated.</p>
+              </div>
+              <button onClick={() => setPreviewPlan(null)} className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground"><X size={18} /></button>
+            </div>
+
+            <div className="p-5 bg-muted/20">
+              <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden max-w-xs mx-auto">
+                <div className="flex items-center gap-2.5 border-b border-border h-14 px-3">
+                  <div className="w-8 h-8 rounded-lg within-gradient flex-shrink-0" />
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold text-foreground truncate">Your Business</p>
+                    <p className="text-[10px] text-muted-foreground">{planLabel(previewPlan)} plan</p>
+                  </div>
+                </div>
+                <div className="py-2 px-2 space-y-0.5 max-h-[420px] overflow-y-auto">
+                  {ALL_SCREENS.map((screen) => {
+                    const unlocked = screensForPlan(previewPlan).some((s) => s.label === screen.label);
+                    return (
+                      <div
+                        key={screen.label}
+                        className={`flex items-center gap-3 px-3 py-2 rounded-lg text-xs ${
+                          unlocked ? 'text-foreground' : 'text-muted-foreground/50'
+                        }`}
+                      >
+                        <screen.icon size={15} className={unlocked ? 'text-primary' : 'text-muted-foreground/40'} />
+                        <span className="flex-1">{screen.label}</span>
+                        {!unlocked && <Lock size={11} className="text-muted-foreground/40" />}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            <div className="p-5 flex items-center justify-between">
+              <p className="text-xs text-muted-foreground">
+                {screensForPlan(previewPlan).length} of {ALL_SCREENS.length} screens unlocked on {planLabel(previewPlan)}
+              </p>
+              <button
+                onClick={() => {
+                  const plan = plans.find((p) => p.name.toLowerCase() === previewPlan);
+                  if (plan) { setSelectedPlan(plan); setShowUpgradeModal(true); }
+                  setPreviewPlan(null);
+                }}
+                className="btn-primary text-sm"
+              >
+                Choose {planLabel(previewPlan)}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </BusinessLayout>
   );
 }

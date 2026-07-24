@@ -373,13 +373,241 @@ no page reload needed.
 
 Verified with a full production build, before and after.
 
-## 24. Still mock-only (not touched this pass)
+## 25. Fixed real causes of perceived lag, plus sidebar active state
+
+**Found and fixed three real issues**, not just cosmetic tweaks:
+
+1. **`middleware.ts` was making a real network round-trip to Supabase's auth
+   server on almost every click** — including your public customer order
+   links and the login/signup page, which never needed it. Every navigation
+   was paying that latency. Now skips the auth check entirely on `/order/*`
+   and the root login/signup page.
+2. **`package.json`'s `"start"` script was actually running the dev server**
+   (`next dev`), not a production server (`next start`). Dev mode is always
+   noticeably slower — every route recompiles the first time you visit it,
+   plus React's dev-mode overhead. Fixed to run `next start` properly.
+3. **Sidebar active-state highlight was too subtle to register as "selected"**
+   — just a faint tinted background. Strengthened to a clear gray background
+   with bold, theme-colored text, matching what you asked for.
+
+**Important, please check this yourself:** if you've been testing inside
+Rocket's live preview (not your actual deployed Netlify site), what you're
+feeling may be **inherent Next.js dev-server behavior**, not a bug — dev mode
+is always slower than production, by design, everywhere, for every Next.js
+app. The real test is your deployed Netlify URL (which builds with `next
+build` via the `netlify.toml` I added, always producing the fast, optimized
+version) — if it's still laggy there after these fixes, that's a genuine
+issue and I'd want the specific page/action that's slow to dig further.
+
+## 27. Purchase Orders + Suppliers — wired to real data, closes the Inventory loop
+
+`src/app/purchase-orders/page.tsx` rewritten against the real
+`suppliers`/`purchase_orders`/`purchase_order_items` schema.
+
+- **Suppliers**: full CRUD (add/edit/deactivate), with real order count and
+  total spent computed from actual purchase order history
+- **Purchase Orders**: create with real line items (product + quantity + unit
+  cost, auto-filled from the product's cost price), status workflow
+  (draft/sent/partial/received/cancelled) via inline dropdown
+- **"Receive" actually creates real stock** — this is the piece that closes
+  the loop with Inventory. Confirming receipt creates real `stock_batches`
+  rows (visible immediately on the Products/Inventory pages) and matching
+  `stock_movements` audit entries, updates how much of each line item has
+  been received, and automatically marks the PO `partial` or `received`
+  depending on whether everything ordered has arrived yet.
+
+Not tested against your live database — same standing caveat as everything
+else. The receiving flow in particular does several sequential writes (batch,
+movement, item update, PO status) — if anything in that chain errors partway
+through, send me the exact message and I'll check the sequence.
+
+## 28. Still mock-only (not touched this pass)
 customers, orders, products, inventory, estimates, purchase-orders (the table data),
 staff-management, subscription, customer-portal (all sub-pages), and every
 super-admin-panel screen. These all look finished in the UI but write to local
 state only. Worth tackling next, one at a time, the same way Drivers was just done.
 
+## 29. Customer-facing AI assistant — new, read-only
+
+Floating chat widget on the customer order portal (`/order/[token]`), bottom-
+right. New files: `assistant-actions.ts` (Server Action) and
+`AssistantWidget.tsx` (client component).
+
+**Deliberately read-only** — it answers questions about the customer's real,
+curated product list, prices, and their 5 most recent orders. It cannot place,
+change, or cancel an order; the system prompt explicitly tells it to direct
+the customer to the order form instead if asked to do so. It never gets
+write access to any table — pure Q&A.
+
+**Required setup:** needs a real `ANTHROPIC_API_KEY` in your environment — the
+one currently in `.env` is a placeholder ("your-key-here"), not a real key.
+Without a real key, the widget shows a friendly "not set up yet" message
+instead of erroring. Get a key at https://console.anthropic.com, add it to
+Netlify's environment variables (server-side only, no `NEXT_PUBLIC_` prefix
+needed — this one's never sent to the browser either).
+
+Uses `claude-haiku-4-5-20251001` — fast and inexpensive, appropriate for
+short FAQ-style answers. Swap the model string in `assistant-actions.ts` if
+you want higher-quality responses for more complex questions later.
+
+**Not yet built:** an equivalent assistant for the business admin side (e.g.
+"what's my top product this week?") — mentioned as a maybe; say the word and
+I'll add it as its own pass.
+
+## 30. Also fixed: Next.js dev indicator
+
+That "N" button in the corner during local development is Next.js's own
+built-in dev-mode overlay — not something exposing real data to customers,
+and it never appears in your deployed production build. Disabled it anyway
+in `next.config.mjs` (`devIndicators: false`) since it was distracting.
+
+## Session updates (middleware, PWA polish, theme, loaders)
+
+Also included in this pass: middleware now skips the Supabase auth
+round-trip entirely on public routes (`/order/[token]`, `/`), cutting real
+navigation latency; the `start` script now correctly runs `next start`
+instead of `next dev`; a branded loading overlay (logo rises + spins) on
+sign-in/sign-up/order-submit; theme color now syncs app-wide via a CSS
+variable; sidebar active state has a clearer gray highlight with a left
+accent border.
+
 ## Before you deploy
-Run the new migrations in Supabase (SQL Editor, in order):
+
+Run all new migrations in Supabase (SQL Editor, in order):
 1. `20260722150000_user_profile_phone.sql`
 2. `20260722160000_drivers_deliveries.sql`
+3. `20260722170000_order_workflow_fields.sql`
+4. `20260722180000_customer_portal_tokens.sql`
+
+Required environment variables (Netlify: Site settings > Environment variables):
+- `SUPABASE_SERVICE_ROLE_KEY` — required for the customer order portal and assistant
+- `ANTHROPIC_API_KEY` — required for the customer assistant widget to actually respond
+
+## Google Sheets stock/estimate sync + configurable order limit
+
+You shared the actual source of the reference app (cell-link-orders). Key
+finding: its "Stocks" and "Estimates" screens have no database table at all —
+they read/write directly to specific tabs/columns of a Google Sheet via the
+Sheets API, with a service account. That only works because it's one bakery
+with one hardcoded sheet.
+
+**Built a multi-tenant equivalent** at `/stock-sheet`:
+- One shared WITH-IN Google service account (new files:
+  `src/lib/google/sheets.ts`, `src/app/stock-sheet/actions.ts`,
+  `src/app/stock-sheet/page.tsx`) — each business connects by sharing THEIR
+  OWN sheet with that service account's email as Editor, then pasting their
+  sheet's ID/URL.
+- Sections are configurable per business (name, tab name, name/stock/estimate
+  columns, header row) rather than hardcoded "Production"/"Freezer" and
+  columns A/F/G — every business's sheet will look different.
+- Quantity inputs per product, "Save Stock" / "Save Estimates" write directly
+  back to the live Google Sheet via `sheets.spreadsheets.values.batchUpdate`,
+  same underlying mechanic as the reference app.
+- New migration: `20260724000001_google_sheets_stock_estimates.sql`
+  (`google_sheet_connections`, `stock_sections` tables, RLS matching the
+  existing pattern).
+
+**Required setup:** add `GOOGLE_SERVICE_ACCOUNT_EMAIL` and
+`GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY` (or `GOOGLE_SERVICE_ACCOUNT_KEY_JSON`
+with the full downloaded key) to your environment — server-side only, never
+`NEXT_PUBLIC_`. You'll need to create a Google Cloud service account and
+enable the Sheets API to get these. Without them, the page shows a clear
+"not configured" message rather than failing silently.
+
+**Not built:** carrying data between two alternating sheets (the reference's
+Mon-Wed/Thu-Sat rotation) — that's specific to one bakery's two-sheet
+schedule, not a generic concept. Each business here has one sheet with
+named sections instead.
+
+**Also added:** a configurable `max_order_products` setting per business
+(NULL = unlimited), so the customer order portal can show the same "X of N
+products used" counter the reference app has — but per-business instead of
+hardcoded to 20 like the original single-tenant version. Not yet exposed in
+a Settings UI; currently needs to be set directly in Supabase
+(`update businesses set max_order_products = 20 where id = '...'`).
+
+Verified with a full production build.
+
+## Plan-based screen access (Starter / Professional / Enterprise)
+
+New file: `src/lib/planAccess.ts` — a central map of which screens require
+which plan, based on the feature bullets already shown on your Subscription
+page's plan cards:
+
+- **Starter**: Dashboard, Orders, Customers, Products, Staff, Reports,
+  Subscription, Settings
+- **Professional+**: everything above, plus Order Tracking, Customer
+  Analytics, Customer Portal, Stocks (Inventory), Stock Sheet (Google),
+  Estimates, Purchase Orders, Drivers
+- **Enterprise**: same screen set as Professional (the difference per your
+  plan cards is usage limits and support, not extra screens) — easy to add
+  an `enterprise`-only tier to `planAccess.ts` later if you introduce a
+  feature that's truly Enterprise-exclusive.
+
+**Two layers of enforcement, not just hiding the link:**
+1. `BusinessSidebar` filters nav items so a Starter business never sees links
+   to screens they can't access.
+2. `BusinessLayout` independently checks the current URL against the
+   business's plan on every page load — so someone can't just type
+   `/inventory` into the address bar to get around the hidden sidebar link.
+   If blocked, they see a clear "this needs the Professional plan" screen
+   with a button straight to Subscription, instead of the real page content.
+
+Reads `business.plan` (already existed, defaults to `'starter'`) — no new
+migration needed. Verified with a full production build.
+
+## Pricing page now describes real access, generated from the same source that enforces it
+
+`ALL_SCREENS` registry added to `src/lib/planAccess.ts` — every screen tagged
+with its required plan. Two new helpers (`screensForPlan`, `screensAddedByPlan`)
+let the Subscription page render an accurate "Screens included" /
+"Everything in the previous plan, plus" list per plan card, pulled from the
+exact same config that `BusinessSidebar` and `BusinessLayout` use to actually
+gate access.
+
+Previously the plan cards had hardcoded marketing strings ("Full Inventory",
+"Advanced Reports") completely disconnected from what was really gated —
+could drift silently. Now there's one place to update if a screen's plan
+requirement changes, and the pricing page can never claim something isn't
+actually true.
+
+Verified with a full production build.
+
+## Subscription page — clearly a test sandbox, not a real payment page
+
+You asked for this not to look official, with placeholders you can actually
+try before deciding on real payment integration. Changes:
+
+- Page-level "Test mode" banner right under the title, and another inside the
+  upgrade modal itself, both explicit that no payment provider is connected
+- Card/expiry/CVV fields are now editable (previously disabled) but purely
+  cosmetic — nothing is validated, stored, or sent anywhere
+- **Clicking "Confirm Switch (Test)" actually changes your business's real
+  `plan` value in Supabase** and refreshes your session, so you can
+  immediately see the sidebar and route-gating from `planAccess.ts` respond
+  for real — free and instant, no payment step in the way while you're
+  still deciding
+- Billing History table now labeled "Example data — not connected to real
+  billing yet" so it doesn't read as real invoice records
+
+Verified with a full production build.
+
+## Plan cards rewritten around real screen access, plus an actual interactive preview
+
+You asked to stop showing the generic marketing bullets ("Up to 3 users",
+"Full Inventory") and instead divide each plan by what it actually gives
+access to. Each plan card now shows its **complete, real screen list**
+(not just what's added over the previous tier), generated live from
+`screensForPlan()` in `planAccess.ts` — the exact same source enforcing
+access. No more disconnect between what's promised and what's real.
+
+**On the video request:** I can't render an actual video, but built something
+more useful for this — an interactive "Preview this plan" button on each
+card that opens a live mockup of your real sidebar, with every screen shown
+either unlocked (real icon, real label, colored) or locked (grayed out, lock
+icon) for that specific plan. It's built from the same `ALL_SCREENS`
+registry and icons as the real `BusinessSidebar`, so it's an accurate
+preview, not a mockup that could drift from reality. From the preview modal
+you can go straight into "Choose this plan."
+
+Verified with a full production build.

@@ -17,6 +17,14 @@ function injectTokenFromHeader(request: NextRequest): void {
 }
 
 export async function middleware(request: NextRequest) {
+  // Public pages need no session refresh at all — skip the network round-trip
+  // to Supabase's auth server entirely rather than paying that latency on
+  // every click into the login screen or a customer's order link.
+  const { pathname } = request.nextUrl;
+  if (pathname.startsWith('/order/') || pathname === '/') {
+    return NextResponse.next();
+  }
+
   injectTokenFromHeader(request);
   let supabaseResponse = NextResponse.next({ request });
 
