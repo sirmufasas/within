@@ -4,6 +4,7 @@ import React, { useMemo, useState, useTransition } from 'react';
 import { Minus, Plus, Package, Clock, CheckCircle, ShoppingCart, History as HistoryIcon } from 'lucide-react';
 import { submitOrder } from './actions';
 import LoadingOverlay from '@/components/ui/LoadingOverlay';
+import AssistantWidget from './AssistantWidget';
 
 export interface PortalProduct {
   id: string;
@@ -244,6 +245,8 @@ export default function OrderPortalClient({
           </div>
         </div>
       )}
+
+      <AssistantWidget token={token} primaryColor={primaryColor} />
     </div>
   );
 }

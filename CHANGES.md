@@ -427,7 +427,58 @@ staff-management, subscription, customer-portal (all sub-pages), and every
 super-admin-panel screen. These all look finished in the UI but write to local
 state only. Worth tackling next, one at a time, the same way Drivers was just done.
 
+## 29. Customer-facing AI assistant — new, read-only
+
+Floating chat widget on the customer order portal (`/order/[token]`), bottom-
+right. New files: `assistant-actions.ts` (Server Action) and
+`AssistantWidget.tsx` (client component).
+
+**Deliberately read-only** — it answers questions about the customer's real,
+curated product list, prices, and their 5 most recent orders. It cannot place,
+change, or cancel an order; the system prompt explicitly tells it to direct
+the customer to the order form instead if asked to do so. It never gets
+write access to any table — pure Q&A.
+
+**Required setup:** needs a real `ANTHROPIC_API_KEY` in your environment — the
+one currently in `.env` is a placeholder ("your-key-here"), not a real key.
+Without a real key, the widget shows a friendly "not set up yet" message
+instead of erroring. Get a key at https://console.anthropic.com, add it to
+Netlify's environment variables (server-side only, no `NEXT_PUBLIC_` prefix
+needed — this one's never sent to the browser either).
+
+Uses `claude-haiku-4-5-20251001` — fast and inexpensive, appropriate for
+short FAQ-style answers. Swap the model string in `assistant-actions.ts` if
+you want higher-quality responses for more complex questions later.
+
+**Not yet built:** an equivalent assistant for the business admin side (e.g.
+"what's my top product this week?") — mentioned as a maybe; say the word and
+I'll add it as its own pass.
+
+## 30. Also fixed: Next.js dev indicator
+
+That "N" button in the corner during local development is Next.js's own
+built-in dev-mode overlay — not something exposing real data to customers,
+and it never appears in your deployed production build. Disabled it anyway
+in `next.config.mjs` (`devIndicators: false`) since it was distracting.
+
+## Session updates (middleware, PWA polish, theme, loaders)
+
+Also included in this pass: middleware now skips the Supabase auth
+round-trip entirely on public routes (`/order/[token]`, `/`), cutting real
+navigation latency; the `start` script now correctly runs `next start`
+instead of `next dev`; a branded loading overlay (logo rises + spins) on
+sign-in/sign-up/order-submit; theme color now syncs app-wide via a CSS
+variable; sidebar active state has a clearer gray highlight with a left
+accent border.
+
 ## Before you deploy
-Run the new migrations in Supabase (SQL Editor, in order):
+
+Run all new migrations in Supabase (SQL Editor, in order):
 1. `20260722150000_user_profile_phone.sql`
 2. `20260722160000_drivers_deliveries.sql`
+3. `20260722170000_order_workflow_fields.sql`
+4. `20260722180000_customer_portal_tokens.sql`
+
+Required environment variables (Netlify: Site settings > Environment variables):
+- `SUPABASE_SERVICE_ROLE_KEY` — required for the customer order portal and assistant
+- `ANTHROPIC_API_KEY` — required for the customer assistant widget to actually respond
