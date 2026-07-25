@@ -1,6 +1,6 @@
 import {
   LayoutDashboard, ShoppingCart, MapPin, Users, LineChart, UserCircle, Package,
-  Warehouse, Sheet as SheetIcon, FileText, CreditCard, Truck, UserCog, BarChart3, Settings,
+  Warehouse, Sheet as SheetIcon, FileText, CreditCard, Truck, UserCog, BarChart3, Settings, Key,
 } from 'lucide-react';
 
 export type Plan = 'starter' | 'professional' | 'enterprise';
@@ -53,6 +53,7 @@ export const ALL_SCREENS: { label: string; minPlan: Plan; icon: any }[] = [
   { label: 'Reports', minPlan: 'starter', icon: BarChart3 },
   { label: 'Subscription', minPlan: 'starter', icon: CreditCard },
   { label: 'Settings', minPlan: 'starter', icon: Settings },
+  { label: 'API Access', minPlan: 'enterprise', icon: Key },
 ];
 
 /** Every screen a business on `plan` can access (cumulative — higher plans include lower ones). */

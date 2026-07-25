@@ -611,3 +611,27 @@ preview, not a mockup that could drift from reality. From the preview modal
 you can go straight into "Choose this plan."
 
 Verified with a full production build.
+
+## Fixed: Professional and Enterprise showed identical screens
+
+Real bug, not cosmetic — Enterprise had no screen genuinely exclusive to it,
+so its card and the plan preview showed the exact same screen list as
+Professional, just at a higher price. Confusing and looked broken, correctly
+flagged.
+
+**Fixed by adding a real, working Enterprise-exclusive feature: API Access**
+(`/api-access`, new page). Each business gets a real, unique API key
+(auto-generated via a new DB trigger, migration updated) with reveal/hide,
+copy, and regenerate — all genuinely functional. Honestly labeled on the
+page itself: the key works and is yours, but WITH-IN doesn't have live
+public API endpoints yet for it to authenticate against. Nothing here will
+need to change when that ships.
+
+Also added `terms` text per plan (user/product limits, support tier) shown
+under the price, **clearly visually separate from the enforced screen list**
+below it — these aren't gated/enforced anywhere in code, so they're labeled
+as plan terms, not mixed in with the real "screens included" list. Keeps the
+honesty principle from the rest of this session: don't claim something is
+enforced when it isn't.
+
+Verified with a full production build; `/api-access` compiles correctly.
