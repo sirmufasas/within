@@ -635,3 +635,23 @@ honesty principle from the rest of this session: don't claim something is
 enforced when it isn't.
 
 Verified with a full production build; `/api-access` compiles correctly.
+
+## Real fix for navigation lag: middleware was making a network call on every single click
+
+Found the actual remaining cause. Every navigation to any authenticated
+screen (Dashboard, Products, Orders, everything except the public order
+portal) was running `supabase.auth.getUser()` in middleware \u2014 a genuine
+network round-trip to Supabase's auth server, blocking the page from even
+starting to render until it returned. That's real, measurable latency paid
+on every click, not a one-time cost.
+
+**Fixed:** switched to `getSession()`, which reads the session from the
+cookie locally with no network call in the common case (only hits the
+network when a token has actually expired and needs refreshing \u2014 much
+rarer). This is safe: middleware was never the real authorization boundary
+here \u2014 every table has its own RLS policy that independently enforces
+access regardless of what middleware decides, so this doesn't weaken
+security, it just stops paying for a round-trip that wasn't buying
+additional real protection.
+
+Verified with a full production build.
