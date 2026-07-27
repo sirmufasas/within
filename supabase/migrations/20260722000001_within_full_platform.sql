@@ -7,7 +7,7 @@
 
 -- ============================================================
 -- TYPES
--- ============================================================
+-- ==================a==========================================
 DROP TYPE IF EXISTS public.subscription_status CASCADE;
 CREATE TYPE public.subscription_status AS ENUM ('trial', 'active', 'expired', 'suspended');
 
