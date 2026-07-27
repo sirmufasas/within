@@ -2,7 +2,7 @@
 
 import React, { useMemo, useState, useTransition } from 'react';
 import { Minus, Plus, Package, Clock, CheckCircle } from 'lucide-react';
-import { submitOrder } from './actions';
+import { submitOrder, addOnToOrder } from './actions';
 import LoadingOverlay from '@/components/ui/LoadingOverlay';
 import AssistantWidget from './AssistantWidget';
 
@@ -31,6 +31,7 @@ interface Props {
   maxProducts: number | null;
   products: PortalProduct[];
   history: PortalHistoryOrder[];
+  todayOrder: { totalItems: number } | null;
   forDateIso: string;
   forDateLabel: string;
 }
@@ -91,8 +92,9 @@ function QtyControl({
 }
 
 export default function OrderPortalClient({
-  token, businessName, logoUrl, primaryColor, customerName, maxProducts, products, history, forDateLabel,
+  token, businessName, logoUrl, primaryColor, customerName, maxProducts, products, history, todayOrder, forDateLabel,
 }: Props) {
+  const [mode, setMode] = useState<'default' | 'addon'>('default');
   const [qty, setQty] = useState<Record<string, number>>({});
   const [showMore, setShowMore] = useState(false);
   const [productSearch, setProductSearch] = useState('');
@@ -156,14 +158,17 @@ export default function OrderPortalClient({
       return;
     }
     startTransition(async () => {
-      const result = await submitOrder(token, items, msg);
+      const result = mode === 'addon'
+        ? await addOnToOrder(token, items, msg)
+        : await submitOrder(token, items, msg);
       if (result.error) {
         setError(result.error);
       } else {
-        setSuccessMsg(`Order submitted for ${forDateLabel}.`);
+        setSuccessMsg(mode === 'addon' ? `Added to your order for ${forDateLabel}.` : `Order submitted for ${forDateLabel}.`);
         setQty({});
         setMessage('');
         setMessageSkipped(false);
+        setMode('default');
       }
     });
   };
@@ -175,6 +180,82 @@ export default function OrderPortalClient({
       setShowMessageModal(true);
     }
   };
+
+  // Matches the reference app exactly: if the customer already has an order
+  // in for tomorrow, show a "received" confirmation screen instead of the
+  // ordering form, with an option to add more items on top of it.
+  if (todayOrder && mode === 'default') {
+    return (
+      <div className="min-h-screen bg-neutral-50 flex items-center justify-center p-6">
+        <div className="bg-white rounded-3xl shadow-lg border border-neutral-200 p-8 max-w-md w-full text-center">
+          <div className="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center mx-auto mb-4">
+            <CheckCircle size={32} className="text-emerald-600" />
+          </div>
+          <h1 className="text-2xl font-bold mb-2 text-neutral-900">Your order has been received!</h1>
+          <h3 className="text-sm font-semibold text-neutral-500 mb-2">New orders can only be submitted tomorrow</h3>
+          <p className="text-neutral-600 mb-2">
+            <strong>{customerName}</strong> \u2014 {todayOrder.totalItems} items for {forDateLabel}.
+          </p>
+          <div className="flex flex-col gap-2 mt-4">
+            <button
+              onClick={() => { setMode('addon'); setQty({}); }}
+              className="text-white font-bold py-3 rounded-xl"
+              style={{ backgroundColor: primaryColor }}
+            >
+              + Add onto Prev Order
+            </button>
+            <button
+              onClick={() => setShowHistory(true)}
+              className="border border-neutral-200 hover:bg-neutral-50 font-semibold py-3 rounded-xl text-neutral-700"
+            >
+              History
+            </button>
+          </div>
+        </div>
+
+        {showHistory && (
+          <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" onClick={() => setShowHistory(false)}>
+            <div className="bg-white rounded-2xl max-w-md w-full max-h-[85vh] overflow-auto shadow-xl" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center justify-between p-4 border-b border-neutral-200 sticky top-0 bg-white">
+                <h3 className="font-bold text-neutral-900">Order History</h3>
+                <button onClick={() => setShowHistory(false)} className="text-2xl leading-none text-neutral-400">&times;</button>
+              </div>
+              <div className="p-4 space-y-3">
+                {history.length === 0 ? (
+                  <div className="text-center py-6">
+                    <Clock className="mx-auto mb-2 text-neutral-300" size={24} />
+                    <p className="text-sm text-neutral-500">No past orders yet.</p>
+                  </div>
+                ) : (
+                  history.map((o) => {
+                    const total = o.items.reduce((s, it) => s + it.quantity * it.unit_price, 0);
+                    return (
+                      <div key={o.id} className="border border-neutral-200 rounded-xl p-3">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="text-xs text-neutral-500">Ordered for {o.for_date} \u00b7 {o.items.length} items \u00b7 R {total.toFixed(2)}</div>
+                          <span className={`text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full ${statusColors[o.status] || 'bg-neutral-100 text-neutral-700'}`}>
+                            {o.status}
+                          </span>
+                        </div>
+                        <ul className="text-sm space-y-1">
+                          {o.items.map((it, i) => (
+                            <li key={i} className="flex justify-between text-neutral-800">
+                              <span>{it.product_name}</span>
+                              <span className="font-semibold">{it.quantity}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-neutral-50 pb-40">
@@ -194,6 +275,15 @@ export default function OrderPortalClient({
             <p className="text-[10px] uppercase tracking-widest text-neutral-400 font-semibold">{businessName}</p>
             <h1 className="font-bold leading-tight truncate text-neutral-900">{customerName}</h1>
           </div>
+          {mode === 'addon' && (
+            <button
+              onClick={() => setMode('default')}
+              className="px-3 py-1.5 rounded-lg border-2 text-xs font-bold transition flex-shrink-0"
+              style={{ borderColor: primaryColor, color: primaryColor }}
+            >
+              Cancel
+            </button>
+          )}
         </div>
       </header>
 
@@ -202,10 +292,12 @@ export default function OrderPortalClient({
           className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold mb-3"
           style={{ backgroundColor: `${primaryColor}1A`, color: primaryColor }}
         >
-          ORDER FOR TOMORROW
+          {mode === 'addon' ? 'ADD-ON ORDER' : 'ORDER FOR TOMORROW'}
         </div>
         <h2 className="text-2xl font-bold mb-1 text-neutral-900">{forDateLabel}</h2>
-        <p className="text-sm text-neutral-500 mb-3">Set quantities and submit. Orders are placed the day before.</p>
+        <p className="text-sm text-neutral-500 mb-3">
+          {mode === 'addon' ? "Add extra quantities on top of today's order." : 'Set quantities and submit. Orders are placed the day before.'}
+        </p>
         {maxProducts && (
           <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold mb-3 ${limitPillClass}`} style={limitPillStyle}>
             {usedCount} of {maxProducts} products used{atLimit ? ' \u00b7 Limit reached' : ` \u00b7 ${remaining} left`}
@@ -308,7 +400,7 @@ export default function OrderPortalClient({
             className="w-full py-3 rounded-xl text-white font-bold disabled:opacity-50 transition"
             style={{ backgroundColor: primaryColor }}
           >
-            {isPending ? 'Sending...' : `Submit Order${usedCount > 0 ? ` (${usedCount})` : ''}`}
+            {isPending ? 'Sending...' : mode === 'addon' ? `Submit Add-On${usedCount > 0 ? ` (${usedCount})` : ''}` : `Submit Order${usedCount > 0 ? ` (${usedCount})` : ''}`}
           </button>
           {error && <p className="mt-2 text-xs text-red-600">{error}</p>}
           {successMsg && <p className="mt-2 text-xs text-emerald-700 flex items-center gap-1.5"><CheckCircle size={13} /> {successMsg}</p>}

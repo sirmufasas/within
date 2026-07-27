@@ -740,3 +740,42 @@ everything actually is. Kept a lightweight inline "add location" so new
 branches can actually receive stock into something.
 
 All three verified with a full production build.
+
+## Customer portal now matches the reference app exactly (add-on order flow, currency to Rand)
+
+You checked the reference app's `order.$slug.tsx` in full and confirmed most
+of it already matched (limit pill, locked steppers, search, message modal,
+history modal, sticky bottom bar) — good news, that was from an earlier pass
+in this session. The one genuinely missing piece: **the "received today"
+screen and add-on order flow.**
+
+**Added, matching the reference exactly:**
+- If a customer already has an order in for tomorrow, they now see a
+  confirmation screen ("Your order has been received!") instead of the
+  ordering form, with their item count and a **"+ Add onto Prev Order"**
+  button
+- Add-on mode: header shows a Cancel button, the pill reads "ADD-ON ORDER,"
+  submit button reads "Submit Add-On" \u2014 submitting creates a new
+  `order_submissions` row tagged `order_type = 'added'` (same mechanic as
+  the reference, which keeps a clean history of what was added vs. the
+  original order, rather than editing it in place)
+- New Server Action: `addOnToOrder()` in `actions.ts`, mirroring
+  `submitOrder()`'s security pattern (re-validates token, stamps price/name
+  server-side)
+
+**Deliberately NOT replicated** (flagging so it's a clear choice, not an
+oversight): the reference's delivery-day blocking and "Kota-only product"
+filtering are hardcoded to specific named customers/products at one bakery
+(e.g. checking if a customer's name contains "braza" or "nossa cassa"). That
+logic doesn't generalize to other businesses on a multi-tenant platform, so
+it wasn't ported over.
+
+## Currency fixed to Rand everywhere
+
+Found and fixed every remaining "\u20ac" (Euro) symbol across the app \u2014
+Dashboard's mock Recent Orders/Metrics, and the Super Admin panel's mock
+Recent Signups/Businesses Table/Metrics. Also swapped the `Euro` icon for a
+currency-neutral `Banknote` icon on the Dashboard metric card. Full sweep of
+`src/` confirms none remain.
+
+Verified with a full production build.

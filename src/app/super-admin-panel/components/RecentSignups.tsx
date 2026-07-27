@@ -63,7 +63,7 @@ const signups = [
 const platformActivity = [
   { id: 'pa-001', message: 'Distribuidora Norte processed 2,891 orders this month — highest volume tenant', type: 'success', time: '1 hr ago' },
   { id: 'pa-002', message: 'Talho do Mercado payment failed for 3rd consecutive month — auto-suspended', type: 'danger', time: '3 hr ago' },
-  { id: 'pa-003', message: 'Platform MRR crossed €18,000 milestone', type: 'success', time: '6 hr ago' },
+  { id: 'pa-003', message: 'Platform MRR crossed R 18,000 milestone', type: 'success', time: '6 hr ago' },
   { id: 'pa-004', message: '5 trial accounts expiring within 48 hours — reminder emails queued', type: 'warning', time: '12 hr ago' },
 ];
 
