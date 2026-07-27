@@ -779,3 +779,17 @@ currency-neutral `Banknote` icon on the Dashboard metric card. Full sweep of
 `src/` confirms none remain.
 
 Verified with a full production build.
+
+## Added a real "Open" button on Customers, matching the reference app's UX
+
+You pointed at the reference admin's Customers tab, which shows a visible
+"Open" button per customer that navigates straight to their order page.
+Added the same thing \u2014 next to the existing copy-link icon, each customer
+row now has an "Open" button that opens their real order portal in a new
+tab, one click, no copy-paste needed.
+
+**On the Runtime Error you hit:** that's not a bug \u2014 `SUPABASE_SERVICE_ROLE_KEY`
+genuinely isn't set wherever you were running the app. The customer portal
+literally cannot load without it (flagged multiple times earlier in
+CHANGES.md). Check your `.env` (local) or Netlify's environment variables
+(deployed) for an actual value, not a blank line.

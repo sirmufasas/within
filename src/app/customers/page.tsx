@@ -8,7 +8,7 @@ import { createClient } from '@/lib/supabase/client';
 import { toast } from 'sonner';
 import {
   Search, Plus, Phone, MapPin, Eye, Edit2, Trash2, X, CheckCircle,
-  User, ShoppingCart, DollarSign, Link2, Copy, Package, Check,
+  User, ShoppingCart, DollarSign, Link2, Copy, Package, Check, ExternalLink,
 } from 'lucide-react';
 
 interface CustomerRow {
@@ -336,6 +336,17 @@ export default function CustomersPage() {
                         <td className="table-cell hidden lg:table-cell"><span className="text-sm font-semibold text-foreground">R {stats.revenue.toFixed(2)}</span></td>
                         <td className="table-cell">
                           <div className="flex items-center gap-1">
+                            <button
+                              onClick={() => {
+                                const link = getPortalLink(c.id);
+                                if (link) window.open(link, '_blank', 'noopener,noreferrer');
+                                else toast.error('No order link found yet — try refreshing the page.');
+                              }}
+                              className="btn-secondary text-xs py-1.5 px-3 flex items-center gap-1.5"
+                              title="Open their order page"
+                            >
+                              <ExternalLink size={13} /> Open
+                            </button>
                             <button onClick={() => setSelected(c)} className="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground" title="View"><Eye size={14} /></button>
                             <button onClick={() => copyPortalLink(c.id)} className="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-primary" title="Copy order link"><Link2 size={14} /></button>
                             <button onClick={() => openEdit(c)} className="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground" title="Edit"><Edit2 size={14} /></button>
