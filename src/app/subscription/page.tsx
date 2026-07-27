@@ -10,9 +10,9 @@ import { toast } from 'sonner';
 import { screensForPlan, ALL_SCREENS, planLabel, type Plan } from '@/lib/planAccess';
 
 const plans = [
-  { name: 'Starter', price: 299, recommended: false },
-  { name: 'Professional', price: 599, recommended: true },
-  { name: 'Enterprise', price: 1299, recommended: false },
+  { name: 'Starter', price: 299, recommended: false, terms: 'Up to 3 users \u00b7 50 products \u00b7 Basic support' },
+  { name: 'Professional', price: 599, recommended: true, terms: 'Up to 10 users \u00b7 500 products \u00b7 Standard support' },
+  { name: 'Enterprise', price: 1299, recommended: false, terms: 'Unlimited users \u00b7 Unlimited products \u00b7 Priority support' },
 ];
 
 const mockBillingHistory = [
@@ -163,6 +163,7 @@ export default function SubscriptionPage() {
                       <span className="text-3xl font-bold text-foreground">R {plan.price}</span>
                       <span className="text-muted-foreground text-sm">/month</span>
                     </div>
+                    <p className="text-xs text-muted-foreground mt-2 italic">{plan.terms}</p>
                   </div>
                   <div className="mb-5">
                     <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2 flex items-center gap-1.5">

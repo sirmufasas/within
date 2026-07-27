@@ -57,3 +57,30 @@ CREATE TRIGGER sheet_connections_set_updated_at
 -- a per-business setting, NULL = unlimited).
 ALTER TABLE public.businesses
   ADD COLUMN IF NOT EXISTS max_order_products INTEGER;
+
+-- Enterprise-exclusive API access. Auto-generate a key for every business
+-- (harmless for non-Enterprise businesses — the page itself is gated, so a
+-- Starter/Professional business never sees or uses this even though the
+-- column is populated).
+ALTER TABLE public.businesses
+  ADD COLUMN IF NOT EXISTS api_key TEXT;
+
+UPDATE public.businesses
+SET api_key = encode(gen_random_bytes(24), 'hex')
+WHERE api_key IS NULL;
+
+CREATE OR REPLACE FUNCTION public.generate_business_api_key()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF NEW.api_key IS NULL THEN
+    NEW.api_key := encode(gen_random_bytes(24), 'hex');
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS businesses_generate_api_key ON public.businesses;
+CREATE TRIGGER businesses_generate_api_key
+  BEFORE INSERT ON public.businesses
+  FOR EACH ROW EXECUTE FUNCTION public.generate_business_api_key();
+

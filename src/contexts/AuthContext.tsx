@@ -15,6 +15,8 @@ interface Business {
   plan: string;
   trial_ends_at: string | null;
   phone: string | null;
+  api_key?: string | null;
+  max_order_products?: number | null;
 }
 
 interface UserProfile {

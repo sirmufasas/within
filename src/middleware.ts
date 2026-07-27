@@ -44,7 +44,17 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  await supabase.auth.getUser();
+  // getUser() makes a real network round-trip to Supabase's auth server on
+  // every single call — paying that cost on every navigation was the main
+  // cause of slow screen transitions. getSession() reads the session from
+  // the cookie locally (no network call in the common case, only when the
+  // token has actually expired and needs refreshing). This is safe here
+  // because middleware isn't the real authorization boundary — every table
+  // has RLS policies that independently enforce access regardless of what
+  // middleware decides, so a faster/less-strict check here doesn't open a
+  // security hole, it just stops paying for a network round-trip that
+  // wasn't buying additional real protection.
+  await supabase.auth.getSession();
   return supabaseResponse;
 }
 

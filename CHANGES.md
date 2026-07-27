@@ -611,3 +611,47 @@ preview, not a mockup that could drift from reality. From the preview modal
 you can go straight into "Choose this plan."
 
 Verified with a full production build.
+
+## Fixed: Professional and Enterprise showed identical screens
+
+Real bug, not cosmetic — Enterprise had no screen genuinely exclusive to it,
+so its card and the plan preview showed the exact same screen list as
+Professional, just at a higher price. Confusing and looked broken, correctly
+flagged.
+
+**Fixed by adding a real, working Enterprise-exclusive feature: API Access**
+(`/api-access`, new page). Each business gets a real, unique API key
+(auto-generated via a new DB trigger, migration updated) with reveal/hide,
+copy, and regenerate — all genuinely functional. Honestly labeled on the
+page itself: the key works and is yours, but WITH-IN doesn't have live
+public API endpoints yet for it to authenticate against. Nothing here will
+need to change when that ships.
+
+Also added `terms` text per plan (user/product limits, support tier) shown
+under the price, **clearly visually separate from the enforced screen list**
+below it — these aren't gated/enforced anywhere in code, so they're labeled
+as plan terms, not mixed in with the real "screens included" list. Keeps the
+honesty principle from the rest of this session: don't claim something is
+enforced when it isn't.
+
+Verified with a full production build; `/api-access` compiles correctly.
+
+## Real fix for navigation lag: middleware was making a network call on every single click
+
+Found the actual remaining cause. Every navigation to any authenticated
+screen (Dashboard, Products, Orders, everything except the public order
+portal) was running `supabase.auth.getUser()` in middleware \u2014 a genuine
+network round-trip to Supabase's auth server, blocking the page from even
+starting to render until it returned. That's real, measurable latency paid
+on every click, not a one-time cost.
+
+**Fixed:** switched to `getSession()`, which reads the session from the
+cookie locally with no network call in the common case (only hits the
+network when a token has actually expired and needs refreshing \u2014 much
+rarer). This is safe: middleware was never the real authorization boundary
+here \u2014 every table has its own RLS policy that independently enforces
+access regardless of what middleware decides, so this doesn't weaken
+security, it just stops paying for a round-trip that wasn't buying
+additional real protection.
+
+Verified with a full production build.

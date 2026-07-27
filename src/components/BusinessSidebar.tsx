@@ -6,7 +6,7 @@ import {
   LayoutDashboard, ShoppingCart, Users, Package,
   Truck, BarChart3, Settings, ChevronLeft, ChevronRight,
   Bell, LogOut, X, CreditCard, Warehouse, UserCircle, UserCog,
-  MapPin, LineChart, FileText, Sheet,
+  MapPin, LineChart, FileText, Sheet, Key,
 } from 'lucide-react';
 
 import WithinBranding from '@/components/WithinBranding';
@@ -42,6 +42,7 @@ const navItems = [
   { key: 'nav-reports', href: '/reports', icon: BarChart3, label: 'Reports' },
   { key: 'nav-subscription', href: '/subscription', icon: CreditCard, label: 'Subscription' },
   { key: 'nav-settings', href: '/business-settings', icon: Settings, label: 'Settings' },
+  { key: 'nav-api-access', href: '/api-access', icon: Key, label: 'API Access' },
 ];
 
 export default function BusinessSidebar({
