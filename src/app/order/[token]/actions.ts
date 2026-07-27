@@ -8,7 +8,7 @@ interface SubmitItem {
   quantity: number;
 }
 
-export async function submitOrder(token: string, items: SubmitItem[]) {
+export async function submitOrder(token: string, items: SubmitItem[], message?: string) {
   const validItems = items.filter((it) => it.quantity > 0);
   if (validItems.length === 0) {
     return { error: 'Select at least one product.' };
@@ -70,6 +70,7 @@ export async function submitOrder(token: string, items: SubmitItem[]) {
       status: 'pending',
       payment_status: 'pending',
       synced_to_sheet: false,
+      notes: message?.trim() || null,
     })
     .select('id')
     .single();

@@ -1,29 +1,17 @@
 'use client';
 import React, { useState } from 'react';
-import OrderVolumeChart from './OrderVolumeChart';
-import TopProductsChart from './TopProductsChart';
+import OrderVolumeChart, { type OrderVolumePoint } from './OrderVolumeChart';
+import TopProductsChart, { type ProductDataPoint } from './TopProductsChart';
 
-interface OrderDataPoint {
-  day: string;
-  orders: number;
-  revenue: number;
-}
-
-interface ProductDataPoint {
-  name: string;
-  sales: number;
-  revenue: number;
-}
-
-export default function DashboardCharts() {
-  const [selectedOrderData, setSelectedOrderData] = useState<OrderDataPoint | null>(null);
+export default function DashboardCharts({ orderVolumeData, topProductsData }: { orderVolumeData: OrderVolumePoint[]; topProductsData: ProductDataPoint[] }) {
+  const [selectedOrderData, setSelectedOrderData] = useState<OrderVolumePoint | null>(null);
   const [selectedProductData, setSelectedProductData] = useState<ProductDataPoint | null>(null);
 
   return (
     <>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <OrderVolumeChart onDataPointClick={setSelectedOrderData} />
-        <TopProductsChart onDataPointClick={setSelectedProductData} />
+        <OrderVolumeChart data={orderVolumeData} onDataPointClick={setSelectedOrderData} />
+        <TopProductsChart data={topProductsData} onDataPointClick={setSelectedProductData} />
       </div>
 
       {/* Order Detail Modal */}

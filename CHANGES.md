@@ -655,3 +655,126 @@ security, it just stops paying for a round-trip that wasn't buying
 additional real protection.
 
 Verified with a full production build.
+
+## Plan tiers restructured to your exact spec
+
+`src/lib/planAccess.ts` rebuilt around the three-tier breakdown you gave:
+
+- **Starter (7 screens)**: Dashboard, Orders, Customers, Products, Staff,
+  Subscription, Settings
+- **Professional (+3 = 10 total)**: adds Reports, Stocks, Drivers
+- **Enterprise (all 17)**: adds Order Tracking, Customer Analytics, Customer
+  Portal, Stock Sheet (Google), Estimates, Purchase Orders, API Access
+
+The "which 3" for Professional and "which 7" for Enterprise were my call
+(reporting/inventory/delivery as the natural next tier; the rest as more
+advanced/integration-heavy features) — easy to swap any individual screen
+between tiers in that one file if you'd rather group them differently.
+
+## Customers can now sync directly from a Google Sheet
+
+New: a "Sync Customers from Sheet" panel on the **Stock Sheet (Google)**
+page (reuses the same sheet connection you already set up for stock/
+estimates — no second connection needed). Matches the reference app's exact
+mechanic: reads a name column + driver column from a tab, upserts customers
+by name (updates existing, creates new ones with an auto-generated unique
+slug), preserves sheet row order as `sort_order`. New customers immediately
+get a working order-portal token via the trigger already in place.
+
+New files: `readCustomerRows()` in `src/lib/google/sheets.ts`,
+`saveCustomerSyncConfig()` / `syncCustomersFromSheet()` in
+`src/app/stock-sheet/actions.ts`. New migration:
+`20260727000002_customer_sheet_sync.sql` (`customer_sync_config` table).
+
+**I could not open your actual sheet to check its real layout** — `docs.
+google.com` isn't reachable from where I work, so this defaults to the
+reference app's convention (name in column A, driver in column D). Confirm
+or adjust the tab name and columns in the UI to match your sheet before
+syncing, and check the result message (shows how many were created vs.
+updated) to confirm it worked as expected.
+
+Verified with a full production build.
+
+## Three UIs rebuilt to match the reference app exactly, WITH-IN styled
+
+### 1. Customer order portal — rebuilt to match order.$slug.tsx
+`OrderPortalClient.tsx` rewritten. Now matches the reference almost exactly:
+- Product limit pill color-codes (theme color -> amber near limit -> red at
+  limit), steppers lock/gray out once the limit is hit
+- "Show more products" expands into a searchable full list
+- Optional message modal before submit (Skip or Send) — stored as the
+  order's `notes` field (new `submitOrder` param)
+- Sticky bottom bar: Products count + History button + Submit button, all
+  in one row like the reference
+- History moved from a tab into a proper modal, grouped display
+- Full-screen submitting overlay (using the branded LoadingOverlay from
+  earlier in this session)
+
+**Deliberately not copied**: Kota-only product filtering, per-customer
+delivery-day restrictions by name-matching, and add-on/change-order modes —
+all specific business rules for one bakery, not generic platform concepts.
+Flagging in case you want any of these as configurable business rules later.
+
+### 2. Stocks & Estimates — rebuilt on the Stock Sheet page
+The per-section editing UI (`src/app/stock-sheet/page.tsx`) now matches the
+reference's `EstimatesTab`/`StocksTab` interaction exactly: a Stock/Estimates
+mode switch (matching their separate admin tabs), search box, "Show all
+products" toggle (hides zero-value rows once at least one product has a
+value), filled-in products sort to the top and stay there as you type, a
+"X changes pending" indicator, and a full-screen center loading overlay
+during save — all writing to the real Google Sheet via the same mechanism
+as before.
+
+**Deliberately not copied**: the two-alternating-sheet (Mon-Wed/Thu-Sat)
+rotation and its "sheet changed, carry over values?" prompt — that's tied to
+one bakery's specific delivery schedule, not a generic multi-tenant concept.
+Each business here has one sheet with named sections instead.
+
+### 3. Inventory — simplified to a read-only multi-location stock view
+This is what you described: pick a branch/warehouse (e.g. "Main" vs "Town"),
+see exactly how much of each product is on hand there, search to find one
+quickly. Removed the old batch/transfer/supplier management complexity —
+**stock now gets created by receiving Purchase Orders** (already built,
+already writes to `stock_batches`), so this page is purely for viewing where
+everything actually is. Kept a lightweight inline "add location" so new
+branches can actually receive stock into something.
+
+All three verified with a full production build.
+
+## Dashboard — the actual first screen every user sees — was 100% mock, now fully real
+
+Found this while addressing "no more mock data": every single component on the
+main Dashboard (`business-admin-dashboard`) had zero Supabase calls —
+`DashboardMetrics`, `DashboardCharts`, `OrderVolumeChart`, `TopProductsChart`,
+`RecentOrdersTable`, `StockAlertsPanel`, `ActivityFeed` — all hardcoded fake
+numbers, fake orders, fake activity. This is the page every single user lands
+on first, so it mattered more than almost anything else still mock.
+
+**Now all real:**
+- KPI cards: orders today/yesterday, pending orders, today's revenue vs
+  yesterday, stock alerts, total customers + new this week, active
+  deliveries — all computed from real `order_submissions`/`customers`/
+  `stock_batches`/`deliveries` data
+- Order volume + revenue trend chart: real daily data from the last 14 days
+- Top products chart: real revenue ranking from the last 31 days
+- Recent Orders table: real orders, real customer names, real totals —
+  **made read-only** rather than porting over the old fake inline status
+  editor (it only updated local state, never saved — exactly the kind of
+  deceptive UI this whole session has been fixing). Links through to the
+  real Orders page for actual edits.
+- Stock Alerts: real low/out-of-stock products, same logic as the Products page
+- Recent Activity: merges real recent orders and real stock movements into
+  one timeline
+
+**Small supporting fix:** added a `processing` variant to the shared `Badge`
+component — the dashboard's old mock data used fictional status values
+(`production`, `out-for-delivery`) that don't exist in your real schema
+(`pending`/`confirmed`/`processing`/`ready`/`delivered`/`cancelled`).
+
+**Still genuinely mock, for full transparency** (matches what "not touched
+this pass" always meant): Staff Management, the Subscription page's Billing
+History table (already clearly labeled "Example data"), and every Super
+Admin panel screen. Say which one matters most next and I'll do that one
+properly, same as everything else.
+
+Verified with a full production build.

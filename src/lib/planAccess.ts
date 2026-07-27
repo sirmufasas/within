@@ -37,22 +37,27 @@ function normalizePlan(plan: string | null | undefined): Plan {
 // single source of truth — both the sidebar/route guard AND the Subscription
 // page's plan cards read from this list, so they can never drift apart.
 export const ALL_SCREENS: { label: string; minPlan: Plan; icon: any }[] = [
+  // Starter — the 7 screens explicitly requested
   { label: 'Dashboard', minPlan: 'starter', icon: LayoutDashboard },
   { label: 'Orders', minPlan: 'starter', icon: ShoppingCart },
-  { label: 'Order Tracking', minPlan: 'professional', icon: MapPin },
   { label: 'Customers', minPlan: 'starter', icon: Users },
-  { label: 'Customer Analytics', minPlan: 'professional', icon: LineChart },
-  { label: 'Customer Portal', minPlan: 'professional', icon: UserCircle },
   { label: 'Products', minPlan: 'starter', icon: Package },
-  { label: 'Stocks', minPlan: 'professional', icon: Warehouse },
-  { label: 'Stock Sheet (Google)', minPlan: 'professional', icon: SheetIcon },
-  { label: 'Estimates', minPlan: 'professional', icon: FileText },
-  { label: 'Purchase Orders', minPlan: 'professional', icon: CreditCard },
-  { label: 'Drivers', minPlan: 'professional', icon: Truck },
   { label: 'Staff', minPlan: 'starter', icon: UserCog },
-  { label: 'Reports', minPlan: 'starter', icon: BarChart3 },
   { label: 'Subscription', minPlan: 'starter', icon: CreditCard },
   { label: 'Settings', minPlan: 'starter', icon: Settings },
+
+  // Professional — exactly 3 more on top of Starter
+  { label: 'Reports', minPlan: 'professional', icon: BarChart3 },
+  { label: 'Stocks', minPlan: 'professional', icon: Warehouse },
+  { label: 'Drivers', minPlan: 'professional', icon: Truck },
+
+  // Enterprise — everything else
+  { label: 'Order Tracking', minPlan: 'enterprise', icon: MapPin },
+  { label: 'Customer Analytics', minPlan: 'enterprise', icon: LineChart },
+  { label: 'Customer Portal', minPlan: 'enterprise', icon: UserCircle },
+  { label: 'Stock Sheet (Google)', minPlan: 'enterprise', icon: SheetIcon },
+  { label: 'Estimates', minPlan: 'enterprise', icon: FileText },
+  { label: 'Purchase Orders', minPlan: 'enterprise', icon: CreditCard },
   { label: 'API Access', minPlan: 'enterprise', icon: Key },
 ];
 
