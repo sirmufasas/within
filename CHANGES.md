@@ -694,3 +694,49 @@ syncing, and check the result message (shows how many were created vs.
 updated) to confirm it worked as expected.
 
 Verified with a full production build.
+
+## Three UIs rebuilt to match the reference app exactly, WITH-IN styled
+
+### 1. Customer order portal — rebuilt to match order.$slug.tsx
+`OrderPortalClient.tsx` rewritten. Now matches the reference almost exactly:
+- Product limit pill color-codes (theme color -> amber near limit -> red at
+  limit), steppers lock/gray out once the limit is hit
+- "Show more products" expands into a searchable full list
+- Optional message modal before submit (Skip or Send) — stored as the
+  order's `notes` field (new `submitOrder` param)
+- Sticky bottom bar: Products count + History button + Submit button, all
+  in one row like the reference
+- History moved from a tab into a proper modal, grouped display
+- Full-screen submitting overlay (using the branded LoadingOverlay from
+  earlier in this session)
+
+**Deliberately not copied**: Kota-only product filtering, per-customer
+delivery-day restrictions by name-matching, and add-on/change-order modes —
+all specific business rules for one bakery, not generic platform concepts.
+Flagging in case you want any of these as configurable business rules later.
+
+### 2. Stocks & Estimates — rebuilt on the Stock Sheet page
+The per-section editing UI (`src/app/stock-sheet/page.tsx`) now matches the
+reference's `EstimatesTab`/`StocksTab` interaction exactly: a Stock/Estimates
+mode switch (matching their separate admin tabs), search box, "Show all
+products" toggle (hides zero-value rows once at least one product has a
+value), filled-in products sort to the top and stay there as you type, a
+"X changes pending" indicator, and a full-screen center loading overlay
+during save — all writing to the real Google Sheet via the same mechanism
+as before.
+
+**Deliberately not copied**: the two-alternating-sheet (Mon-Wed/Thu-Sat)
+rotation and its "sheet changed, carry over values?" prompt — that's tied to
+one bakery's specific delivery schedule, not a generic multi-tenant concept.
+Each business here has one sheet with named sections instead.
+
+### 3. Inventory — simplified to a read-only multi-location stock view
+This is what you described: pick a branch/warehouse (e.g. "Main" vs "Town"),
+see exactly how much of each product is on hand there, search to find one
+quickly. Removed the old batch/transfer/supplier management complexity —
+**stock now gets created by receiving Purchase Orders** (already built,
+already writes to `stock_batches`), so this page is purely for viewing where
+everything actually is. Kept a lightweight inline "add location" so new
+branches can actually receive stock into something.
+
+All three verified with a full production build.

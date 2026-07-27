@@ -1,7 +1,7 @@
 'use client';
 export const dynamic = 'force-dynamic';
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import BusinessLayout from '@/components/BusinessLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
@@ -64,6 +64,9 @@ export default function StockSheetPage() {
   const [savingStock, setSavingStock] = useState(false);
   const [savingEstimates, setSavingEstimates] = useState(false);
   const [rowsError, setRowsError] = useState<string | null>(null);
+  const [rowMode, setRowMode] = useState<'stock' | 'estimates'>('stock');
+  const [rowSearch, setRowSearch] = useState('');
+  const [showAllRows, setShowAllRows] = useState(false);
 
   const [customerSyncForm, setCustomerSyncForm] = useState({ tab_name: '', name_column: 'A', driver_column: 'D', header_row: 1 });
   const [savingCustomerConfig, setSavingCustomerConfig] = useState(false);
@@ -271,6 +274,41 @@ export default function StockSheetPage() {
     }
   };
 
+  useEffect(() => {
+    setRowSearch('');
+    setShowAllRows(false);
+  }, [activeSectionId, rowMode]);
+
+  const activeEdits = rowMode === 'stock' ? stockEdits : estimateEdits;
+  const setActiveEdits = rowMode === 'stock' ? setStockEdits : setEstimateEdits;
+  const valueForRow = (row: number, original: number) => activeEdits[row] ?? original;
+  const anyRowHasValue = liveRows.some((r) => (rowMode === 'stock' ? r.stock : r.estimate) > 0);
+
+  const filteredSortedRows = useMemo(() => {
+    const s = rowSearch.trim().toLowerCase();
+    return liveRows
+      .filter((r) => {
+        if (s && !r.name.toLowerCase().includes(s)) return false;
+        const original = rowMode === 'stock' ? r.stock : r.estimate;
+        const current = valueForRow(r.row, original);
+        if (anyRowHasValue && !showAllRows && current <= 0) return false;
+        return true;
+      })
+      .sort((a, b) => {
+        const aOrig = rowMode === 'stock' ? a.stock : a.estimate;
+        const bOrig = rowMode === 'stock' ? b.stock : b.estimate;
+        const aFilled = valueForRow(a.row, aOrig) > 0 ? 0 : 1;
+        const bFilled = valueForRow(b.row, bOrig) > 0 ? 0 : 1;
+        if (aFilled !== bFilled) return aFilled - bFilled;
+        return a.name.localeCompare(b.name);
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [liveRows, rowSearch, showAllRows, anyRowHasValue, rowMode, stockEdits, estimateEdits]);
+
+  const activeChangedCount = Object.keys(activeEdits).length;
+  const activeSaving = rowMode === 'stock' ? savingStock : savingEstimates;
+  const handleActiveSave = rowMode === 'stock' ? handleSaveStock : handleSaveEstimates;
+
   if (loading) {
     return (
       <BusinessLayout>
@@ -429,6 +467,21 @@ export default function StockSheetPage() {
                   </div>
                 ))}
 
+                {/* Stock / Estimates mode switch — matches the reference app's separate tabs */}
+                <div className="flex gap-1 bg-muted/30 rounded-xl p-1 w-fit mb-4">
+                  {(['stock', 'estimates'] as const).map((m) => (
+                    <button
+                      key={m}
+                      onClick={() => setRowMode(m)}
+                      className={`px-4 py-1.5 rounded-lg text-sm font-semibold capitalize transition-all ${
+                        rowMode === m ? 'bg-primary text-white' : 'text-muted-foreground hover:text-foreground'
+                      }`}
+                    >
+                      {m}
+                    </button>
+                  ))}
+                </div>
+
                 {rowsLoading ? (
                   <div className="space-y-2">{[0, 1, 2, 3].map((i) => <div key={i} className="h-10 skeleton-wave rounded-lg" />)}</div>
                 ) : rowsError ? (
@@ -437,48 +490,59 @@ export default function StockSheetPage() {
                   <p className="text-sm text-muted-foreground text-center py-8">No product rows found on this tab yet.</p>
                 ) : (
                   <>
-                    <div className="overflow-x-auto">
-                      <table className="w-full">
-                        <thead>
-                          <tr className="border-b border-border">
-                            <th className="table-header">Product</th>
-                            <th className="table-header">Stock</th>
-                            <th className="table-header">Estimate</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {liveRows.map((r) => (
-                            <tr key={r.row} className="hover:bg-muted/20">
-                              <td className="table-cell text-sm text-foreground">{r.name}</td>
-                              <td className="table-cell">
-                                <input
-                                  type="number" min={0}
-                                  className="input-field w-24 text-sm py-1.5"
-                                  value={stockEdits[r.row] ?? r.stock}
-                                  onChange={(e) => setStockEdits((prev) => ({ ...prev, [r.row]: Number(e.target.value) }))}
-                                />
-                              </td>
-                              <td className="table-cell">
-                                <input
-                                  type="number" min={0}
-                                  className="input-field w-24 text-sm py-1.5"
-                                  value={estimateEdits[r.row] ?? r.estimate}
-                                  onChange={(e) => setEstimateEdits((prev) => ({ ...prev, [r.row]: Number(e.target.value) }))}
-                                />
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
+                    <div className="flex flex-wrap items-center gap-3 mb-3">
+                      <input
+                        value={rowSearch}
+                        onChange={(e) => setRowSearch(e.target.value)}
+                        placeholder="Search products..."
+                        className="input-field flex-1 min-w-[180px] text-sm"
+                      />
+                      <label className="flex items-center gap-2 text-xs font-semibold text-muted-foreground flex-shrink-0">
+                        <input type="checkbox" checked={showAllRows} onChange={(e) => setShowAllRows(e.target.checked)} />
+                        Show all products
+                      </label>
                     </div>
-                    <div className="flex gap-3 mt-5">
-                      <button onClick={handleSaveStock} disabled={savingStock} className="btn-primary text-sm flex-1 flex items-center justify-center gap-2">
-                        {savingStock && <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
-                        {savingStock ? 'Saving...' : 'Save Stock'}
-                      </button>
-                      <button onClick={handleSaveEstimates} disabled={savingEstimates} className="btn-primary text-sm flex-1 flex items-center justify-center gap-2">
-                        {savingEstimates && <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
-                        {savingEstimates ? 'Saving...' : 'Save Estimates'}
+
+                    <div className="bg-card rounded-2xl border border-border divide-y divide-border overflow-hidden">
+                      {filteredSortedRows.length === 0 ? (
+                        <div className="p-6 text-center text-sm text-muted-foreground">
+                          {anyRowHasValue ? 'No products match. Toggle "Show all products" to see everything.' : 'No products match your search.'}
+                        </div>
+                      ) : (
+                        filteredSortedRows.map((r) => {
+                          const original = rowMode === 'stock' ? r.stock : r.estimate;
+                          const current = valueForRow(r.row, original);
+                          return (
+                            <div key={r.row} className="p-3 flex items-center justify-between gap-3 hover:bg-muted/20">
+                              <div className="font-semibold text-sm text-foreground truncate">{r.name}</div>
+                              <input
+                                type="text"
+                                inputMode="numeric"
+                                value={current === 0 ? '' : current}
+                                placeholder="0"
+                                onChange={(e) => {
+                                  const raw = e.target.value.replace(/[^0-9]/g, '');
+                                  setActiveEdits((prev) => ({ ...prev, [r.row]: raw === '' ? 0 : Math.max(0, Number(raw)) }));
+                                }}
+                                className="w-20 h-9 text-center font-bold border border-border rounded-lg bg-muted/30 focus:outline-none"
+                              />
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-3 mt-4">
+                      <div className="text-xs text-muted-foreground flex-1">
+                        {activeChangedCount > 0 ? `${activeChangedCount} change${activeChangedCount === 1 ? '' : 's'} pending` : 'No changes'}
+                      </div>
+                      <button
+                        onClick={handleActiveSave}
+                        disabled={activeSaving || activeChangedCount === 0}
+                        className="btn-primary text-sm px-5 flex items-center gap-2"
+                      >
+                        {activeSaving && <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
+                        {activeSaving ? 'Saving...' : `Save ${rowMode === 'stock' ? 'Stock' : 'Estimates'}`}
                       </button>
                     </div>
                   </>
@@ -488,6 +552,19 @@ export default function StockSheetPage() {
           </>
         )}
       </div>
+
+      {(savingStock || savingEstimates) && (
+        <div className="fixed inset-0 z-[80] bg-black/40 flex items-center justify-center p-6">
+          <div className="bg-card rounded-3xl shadow-xl px-8 py-7 flex flex-col items-center gap-4 max-w-xs w-full text-center">
+            <span className="w-9 h-9 border-4 border-primary/25 border-t-primary rounded-full animate-spin" />
+            <div>
+              <p className="font-bold text-foreground">Saving {savingStock ? 'stock' : 'estimates'}...</p>
+              <p className="text-xs text-muted-foreground mt-1">Writing directly to your Google Sheet.</p>
+            </div>
+          </div>
+        </div>
+      )}
+
 
       {showSectionModal && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowSectionModal(false)}>
