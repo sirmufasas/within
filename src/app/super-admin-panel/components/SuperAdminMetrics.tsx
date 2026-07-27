@@ -15,8 +15,8 @@ const metrics = [
   {
     id: 'sa-metric-mrr',
     label: 'Monthly Recurring Revenue',
-    value: '€18,420',
-    change: '+€1,840 vs last month',
+    value: 'R 18,420',
+    change: '+R 1,840 vs last month',
     changeType: 'positive',
     icon: TrendingUp,
     iconBg: 'bg-success/10',

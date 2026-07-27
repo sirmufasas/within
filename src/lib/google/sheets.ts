@@ -64,6 +64,44 @@ export async function verifySheetAccess(spreadsheetId: string): Promise<{ ok: tr
   }
 }
 
+export interface CustomerSheetRow {
+  name: string;
+  driver: string | null;
+  sortOrder: number;
+}
+
+/** Reads customer name + driver columns from a tab, matching the reference app's mechanics: dedupes by name (first occurrence wins), preserves sheet row order as sort_order. */
+export async function readCustomerRows(
+  spreadsheetId: string,
+  tabName: string,
+  nameCol: string,
+  driverCol: string,
+  headerRow: number
+): Promise<CustomerSheetRow[]> {
+  const sheets = await getSheetsClient();
+  const lastCol = [nameCol, driverCol].sort().pop() || 'D';
+  const startRow = headerRow + 1;
+  const res = await sheets.spreadsheets.values.get({
+    spreadsheetId,
+    range: `${tabName}!A${startRow}:${lastCol}5000`,
+  });
+  const rows = (res.data.values as string[][]) ?? [];
+
+  const colIndex = (col: string) => col.toUpperCase().charCodeAt(0) - 65;
+  const nameIdx = colIndex(nameCol);
+  const driverIdx = colIndex(driverCol);
+
+  const seen = new Map<string, CustomerSheetRow>();
+  let order = 0;
+  for (const r of rows) {
+    const name = (r[nameIdx] || '').trim();
+    if (!name || seen.has(name)) continue;
+    order += 1;
+    seen.set(name, { name, driver: (r[driverIdx] || '').trim() || null, sortOrder: order });
+  }
+  return Array.from(seen.values());
+}
+
 export interface SectionRow {
   row: number;
   name: string;

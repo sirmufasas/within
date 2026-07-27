@@ -66,6 +66,16 @@ export default async function CustomerOrderPortalPage({ params }: { params: Prom
 
   const { iso, label } = tomorrowDate();
 
+  // Matches the reference app: if the customer already has an order in for
+  // tomorrow, show the "received" screen (with an add-on option) instead of
+  // the ordering form.
+  const todaySubmission = (historyRes.data as any[] || []).find((o) => o.for_date === iso);
+  const todayOrder = todaySubmission
+    ? {
+        totalItems: (todaySubmission.order_submission_items || []).reduce((s: number, it: any) => s + it.quantity, 0),
+      }
+    : null;
+
   return (
     <OrderPortalClient
       token={token}
@@ -76,6 +86,7 @@ export default async function CustomerOrderPortalPage({ params }: { params: Prom
       maxProducts={businessRes.data?.max_order_products ?? null}
       products={products}
       history={history}
+      todayOrder={todayOrder}
       forDateIso={iso}
       forDateLabel={label}
     />

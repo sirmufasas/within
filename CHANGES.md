@@ -655,3 +655,127 @@ security, it just stops paying for a round-trip that wasn't buying
 additional real protection.
 
 Verified with a full production build.
+
+## Plan tiers restructured to your exact spec
+
+`src/lib/planAccess.ts` rebuilt around the three-tier breakdown you gave:
+
+- **Starter (7 screens)**: Dashboard, Orders, Customers, Products, Staff,
+  Subscription, Settings
+- **Professional (+3 = 10 total)**: adds Reports, Stocks, Drivers
+- **Enterprise (all 17)**: adds Order Tracking, Customer Analytics, Customer
+  Portal, Stock Sheet (Google), Estimates, Purchase Orders, API Access
+
+The "which 3" for Professional and "which 7" for Enterprise were my call
+(reporting/inventory/delivery as the natural next tier; the rest as more
+advanced/integration-heavy features) — easy to swap any individual screen
+between tiers in that one file if you'd rather group them differently.
+
+## Customers can now sync directly from a Google Sheet
+
+New: a "Sync Customers from Sheet" panel on the **Stock Sheet (Google)**
+page (reuses the same sheet connection you already set up for stock/
+estimates — no second connection needed). Matches the reference app's exact
+mechanic: reads a name column + driver column from a tab, upserts customers
+by name (updates existing, creates new ones with an auto-generated unique
+slug), preserves sheet row order as `sort_order`. New customers immediately
+get a working order-portal token via the trigger already in place.
+
+New files: `readCustomerRows()` in `src/lib/google/sheets.ts`,
+`saveCustomerSyncConfig()` / `syncCustomersFromSheet()` in
+`src/app/stock-sheet/actions.ts`. New migration:
+`20260727000002_customer_sheet_sync.sql` (`customer_sync_config` table).
+
+**I could not open your actual sheet to check its real layout** — `docs.
+google.com` isn't reachable from where I work, so this defaults to the
+reference app's convention (name in column A, driver in column D). Confirm
+or adjust the tab name and columns in the UI to match your sheet before
+syncing, and check the result message (shows how many were created vs.
+updated) to confirm it worked as expected.
+
+Verified with a full production build.
+
+## Three UIs rebuilt to match the reference app exactly, WITH-IN styled
+
+### 1. Customer order portal — rebuilt to match order.$slug.tsx
+`OrderPortalClient.tsx` rewritten. Now matches the reference almost exactly:
+- Product limit pill color-codes (theme color -> amber near limit -> red at
+  limit), steppers lock/gray out once the limit is hit
+- "Show more products" expands into a searchable full list
+- Optional message modal before submit (Skip or Send) — stored as the
+  order's `notes` field (new `submitOrder` param)
+- Sticky bottom bar: Products count + History button + Submit button, all
+  in one row like the reference
+- History moved from a tab into a proper modal, grouped display
+- Full-screen submitting overlay (using the branded LoadingOverlay from
+  earlier in this session)
+
+**Deliberately not copied**: Kota-only product filtering, per-customer
+delivery-day restrictions by name-matching, and add-on/change-order modes —
+all specific business rules for one bakery, not generic platform concepts.
+Flagging in case you want any of these as configurable business rules later.
+
+### 2. Stocks & Estimates — rebuilt on the Stock Sheet page
+The per-section editing UI (`src/app/stock-sheet/page.tsx`) now matches the
+reference's `EstimatesTab`/`StocksTab` interaction exactly: a Stock/Estimates
+mode switch (matching their separate admin tabs), search box, "Show all
+products" toggle (hides zero-value rows once at least one product has a
+value), filled-in products sort to the top and stay there as you type, a
+"X changes pending" indicator, and a full-screen center loading overlay
+during save — all writing to the real Google Sheet via the same mechanism
+as before.
+
+**Deliberately not copied**: the two-alternating-sheet (Mon-Wed/Thu-Sat)
+rotation and its "sheet changed, carry over values?" prompt — that's tied to
+one bakery's specific delivery schedule, not a generic multi-tenant concept.
+Each business here has one sheet with named sections instead.
+
+### 3. Inventory — simplified to a read-only multi-location stock view
+This is what you described: pick a branch/warehouse (e.g. "Main" vs "Town"),
+see exactly how much of each product is on hand there, search to find one
+quickly. Removed the old batch/transfer/supplier management complexity —
+**stock now gets created by receiving Purchase Orders** (already built,
+already writes to `stock_batches`), so this page is purely for viewing where
+everything actually is. Kept a lightweight inline "add location" so new
+branches can actually receive stock into something.
+
+All three verified with a full production build.
+
+## Customer portal now matches the reference app exactly (add-on order flow, currency to Rand)
+
+You checked the reference app's `order.$slug.tsx` in full and confirmed most
+of it already matched (limit pill, locked steppers, search, message modal,
+history modal, sticky bottom bar) — good news, that was from an earlier pass
+in this session. The one genuinely missing piece: **the "received today"
+screen and add-on order flow.**
+
+**Added, matching the reference exactly:**
+- If a customer already has an order in for tomorrow, they now see a
+  confirmation screen ("Your order has been received!") instead of the
+  ordering form, with their item count and a **"+ Add onto Prev Order"**
+  button
+- Add-on mode: header shows a Cancel button, the pill reads "ADD-ON ORDER,"
+  submit button reads "Submit Add-On" \u2014 submitting creates a new
+  `order_submissions` row tagged `order_type = 'added'` (same mechanic as
+  the reference, which keeps a clean history of what was added vs. the
+  original order, rather than editing it in place)
+- New Server Action: `addOnToOrder()` in `actions.ts`, mirroring
+  `submitOrder()`'s security pattern (re-validates token, stamps price/name
+  server-side)
+
+**Deliberately NOT replicated** (flagging so it's a clear choice, not an
+oversight): the reference's delivery-day blocking and "Kota-only product"
+filtering are hardcoded to specific named customers/products at one bakery
+(e.g. checking if a customer's name contains "braza" or "nossa cassa"). That
+logic doesn't generalize to other businesses on a multi-tenant platform, so
+it wasn't ported over.
+
+## Currency fixed to Rand everywhere
+
+Found and fixed every remaining "\u20ac" (Euro) symbol across the app \u2014
+Dashboard's mock Recent Orders/Metrics, and the Super Admin panel's mock
+Recent Signups/Businesses Table/Metrics. Also swapped the `Euro` icon for a
+currency-neutral `Banknote` icon on the Dashboard metric card. Full sweep of
+`src/` confirms none remain.
+
+Verified with a full production build.

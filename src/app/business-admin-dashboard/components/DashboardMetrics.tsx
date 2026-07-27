@@ -1,7 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import {
-  ShoppingCart, Clock, Euro, AlertTriangle,
+  ShoppingCart, Clock, Banknote, AlertTriangle,
   Users, Truck,
 } from 'lucide-react';
 
@@ -32,10 +32,10 @@ const metrics = [
   {
     id: 'metric-revenue',
     label: "Today\'s Revenue",
-    value: '€1,284',
-    change: '+€210 vs yesterday',
+    value: 'R 1,284',
+    change: '+R 210 vs yesterday',
     changeType: 'positive',
-    icon: Euro,
+    icon: Banknote,
     iconBg: 'bg-success/10',
     iconColor: 'text-success',
     href: '/reports',
