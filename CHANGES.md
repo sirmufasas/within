@@ -793,3 +793,23 @@ genuinely isn't set wherever you were running the app. The customer portal
 literally cannot load without it (flagged multiple times earlier in
 CHANGES.md). Check your `.env` (local) or Netlify's environment variables
 (deployed) for an actual value, not a blank line.
+
+## Customers page redesigned to match reference's compact list style
+
+Replaced the wide table layout with a simple compact list, matching the
+reference admin's Customers tab: bold name, a small subtitle line showing
+their slug + driver + order count, and a clear "Open" button on the right
+that jumps straight to their order page in a new tab.
+
+**Swapped "Total Revenue" for "Sheet" status** as the third stat card (per
+your request) — shows whether a Google Sheet is connected for this business
+(reusing the `google_sheet_connections` check already built for Stock Sheet),
+with the sheet's name if connected, or "Not connected" if not.
+
+Note: the subtitle shows the customer's internal `slug` (e.g. `/alberton-meat`)
+for a readable identifier, not their actual secret order-portal token —
+showing the real token in a list visible on screen/screenshots would defeat
+its purpose as a secret. The real link is still one click away via Open or
+the copy-link button.
+
+Verified with a full production build.

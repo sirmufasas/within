@@ -8,12 +8,13 @@ import { createClient } from '@/lib/supabase/client';
 import { toast } from 'sonner';
 import {
   Search, Plus, Phone, MapPin, Eye, Edit2, Trash2, X, CheckCircle,
-  User, ShoppingCart, DollarSign, Link2, Copy, Package, Check, ExternalLink,
+  User, ShoppingCart, Sheet as SheetIcon, Link2, Copy, Package, Check, ExternalLink,
 } from 'lucide-react';
 
 interface CustomerRow {
   id: string;
   name: string;
+  slug: string;
   phone: string | null;
   address: string | null;
   driver: string | null;
@@ -36,6 +37,7 @@ export default function CustomersPage() {
   const [customers, setCustomers] = useState<CustomerRow[]>([]);
   const [statsByCustomer, setStatsByCustomer] = useState<Record<string, { orders: number; revenue: number }>>({});
   const [tokenByCustomer, setTokenByCustomer] = useState<Record<string, string>>({});
+  const [sheetConnection, setSheetConnection] = useState<{ connected: boolean; label: string | null } | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -57,17 +59,20 @@ export default function CustomersPage() {
     if (!business?.id) return;
     setLoading(true);
     try {
-      const [customersRes, tokensRes, itemsRes] = await Promise.all([
+      const [customersRes, tokensRes, itemsRes, sheetRes] = await Promise.all([
         supabase.from('customers').select('*').eq('business_id', business.id).order('sort_order'),
         supabase.from('customer_portal_access').select('customer_id, portal_token').eq('business_id', business.id),
         supabase
           .from('order_submission_items')
           .select('quantity, unit_price, products ( selling_price ), order_submissions!inner ( id, customer_id, business_id )')
           .eq('order_submissions.business_id', business.id),
+        supabase.from('google_sheet_connections').select('spreadsheet_label').eq('business_id', business.id).maybeSingle(),
       ]);
       if (customersRes.error) throw customersRes.error;
       if (tokensRes.error) throw tokensRes.error;
       if (itemsRes.error) throw itemsRes.error;
+
+      setSheetConnection({ connected: !!sheetRes.data, label: sheetRes.data?.spreadsheet_label || null });
 
       setCustomers(customersRes.data || []);
 
@@ -104,7 +109,6 @@ export default function CustomersPage() {
   ), [customers, search]);
 
   const totalOrders = Object.values(statsByCustomer).reduce((s, v) => s + v.orders, 0);
-  const totalRevenue = Object.values(statsByCustomer).reduce((s, v) => s + v.revenue, 0);
 
   const resetForm = () => setForm(emptyForm);
 
@@ -282,7 +286,6 @@ export default function CustomersPage() {
           {[
             { label: 'Total Customers', value: customers.length, color: 'text-primary', icon: User },
             { label: 'Total Orders', value: totalOrders, color: 'text-foreground', icon: ShoppingCart },
-            { label: 'Total Revenue', value: `R ${totalRevenue.toLocaleString(undefined, { maximumFractionDigits: 0 })}`, color: 'text-success', icon: DollarSign },
           ].map((s) => (
             <div key={s.label} className="card-base p-4">
               <div className="flex items-center justify-between mb-2">
@@ -292,6 +295,21 @@ export default function CustomersPage() {
               <p className={`text-2xl font-bold ${s.color}`}>{loading ? '—' : s.value}</p>
             </div>
           ))}
+          <div className="card-base p-4">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs text-muted-foreground">Sheet</p>
+              <SheetIcon size={14} className="text-muted-foreground" />
+            </div>
+            {loading ? (
+              <p className="text-2xl font-bold text-foreground">—</p>
+            ) : sheetConnection?.connected ? (
+              <p className="text-lg font-bold text-success flex items-center gap-1.5 truncate">
+                <CheckCircle size={16} className="flex-shrink-0" /> {sheetConnection.label || 'Connected'}
+              </p>
+            ) : (
+              <p className="text-lg font-bold text-muted-foreground">Not connected</p>
+            )}
+          </div>
         </div>
 
         <div className="card-base p-4">
@@ -301,65 +319,43 @@ export default function CustomersPage() {
           </div>
         </div>
 
-        <div className="card-base overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-border bg-muted/30">
-                  <th className="table-header">Customer</th>
-                  <th className="table-header hidden sm:table-cell">Phone</th>
-                  <th className="table-header hidden md:table-cell">Address</th>
-                  <th className="table-header">Orders</th>
-                  <th className="table-header hidden lg:table-cell">Revenue</th>
-                  <th className="table-header">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {loading ? (
-                  [0, 1, 2].map((i) => <tr key={i}><td colSpan={6} className="table-cell"><div className="h-6 skeleton-wave rounded" /></td></tr>)
-                ) : filtered.length === 0 ? (
-                  <tr><td colSpan={6} className="px-4 py-12 text-center text-muted-foreground text-sm">No customers found.</td></tr>
-                ) : (
-                  filtered.map((c) => {
-                    const stats = statsByCustomer[c.id] || { orders: 0, revenue: 0 };
-                    return (
-                      <tr key={c.id} className="hover:bg-muted/20 transition-colors">
-                        <td className="table-cell">
-                          <div className="flex items-center gap-2">
-                            <div className="w-7 h-7 rounded-full within-gradient flex items-center justify-center text-white text-xs font-bold flex-shrink-0">{c.name[0]}</div>
-                            <p className="text-sm font-medium text-foreground">{c.name}</p>
-                          </div>
-                        </td>
-                        <td className="table-cell hidden sm:table-cell"><span className="text-sm text-foreground">{c.phone || '—'}</span></td>
-                        <td className="table-cell hidden md:table-cell"><span className="text-sm text-muted-foreground truncate max-w-[200px] block">{c.address || '—'}</span></td>
-                        <td className="table-cell"><span className="text-sm font-semibold text-foreground">{stats.orders}</span></td>
-                        <td className="table-cell hidden lg:table-cell"><span className="text-sm font-semibold text-foreground">R {stats.revenue.toFixed(2)}</span></td>
-                        <td className="table-cell">
-                          <div className="flex items-center gap-1">
-                            <button
-                              onClick={() => {
-                                const link = getPortalLink(c.id);
-                                if (link) window.open(link, '_blank', 'noopener,noreferrer');
-                                else toast.error('No order link found yet — try refreshing the page.');
-                              }}
-                              className="btn-secondary text-xs py-1.5 px-3 flex items-center gap-1.5"
-                              title="Open their order page"
-                            >
-                              <ExternalLink size={13} /> Open
-                            </button>
-                            <button onClick={() => setSelected(c)} className="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground" title="View"><Eye size={14} /></button>
-                            <button onClick={() => copyPortalLink(c.id)} className="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-primary" title="Copy order link"><Link2 size={14} /></button>
-                            <button onClick={() => openEdit(c)} className="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground" title="Edit"><Edit2 size={14} /></button>
-                            <button onClick={() => confirmDelete(c)} className="p-1.5 rounded hover:bg-danger/10 text-muted-foreground hover:text-danger" title="Delete"><Trash2 size={14} /></button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
+        <div className="card-base overflow-hidden divide-y divide-border">
+          {loading ? (
+            [0, 1, 2, 3].map((i) => <div key={i} className="p-4"><div className="h-8 skeleton-wave rounded" /></div>)
+          ) : filtered.length === 0 ? (
+            <div className="px-4 py-12 text-center text-muted-foreground text-sm">No customers found.</div>
+          ) : (
+            filtered.map((c) => {
+              const stats = statsByCustomer[c.id] || { orders: 0, revenue: 0 };
+              return (
+                <div key={c.id} className="p-3 flex items-center justify-between gap-3 hover:bg-muted/20 transition-colors">
+                  <div className="min-w-0 flex-1">
+                    <p className="font-semibold text-foreground truncate">{c.name}</p>
+                    <p className="text-xs text-muted-foreground truncate">
+                      /{c.slug}{c.driver ? ` \u00b7 ${c.driver}` : ''}{stats.orders > 0 ? ` \u00b7 ${stats.orders} order${stats.orders !== 1 ? 's' : ''}` : ''}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    <button
+                      onClick={() => {
+                        const link = getPortalLink(c.id);
+                        if (link) window.open(link, '_blank', 'noopener,noreferrer');
+                        else toast.error('No order link found yet — try refreshing the page.');
+                      }}
+                      className="btn-secondary text-xs py-1.5 px-3 flex items-center gap-1.5"
+                      title="Open their order page"
+                    >
+                      <ExternalLink size={13} /> Open
+                    </button>
+                    <button onClick={() => setSelected(c)} className="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground" title="View"><Eye size={14} /></button>
+                    <button onClick={() => copyPortalLink(c.id)} className="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-primary" title="Copy order link"><Link2 size={14} /></button>
+                    <button onClick={() => openEdit(c)} className="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground" title="Edit"><Edit2 size={14} /></button>
+                    <button onClick={() => confirmDelete(c)} className="p-1.5 rounded hover:bg-danger/10 text-muted-foreground hover:text-danger" title="Delete"><Trash2 size={14} /></button>
+                  </div>
+                </div>
+              );
+            })
+          )}
         </div>
       </div>
 
