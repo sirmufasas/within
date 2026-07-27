@@ -7,11 +7,11 @@ import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
 import { toast } from 'sonner';
 import {
-  Sheet, Plus, X, CheckCircle, Copy, RefreshCw, Trash2, Edit2, ExternalLink,
+  Sheet, Plus, X, CheckCircle, Copy, RefreshCw, Trash2, Edit2, ExternalLink, Users,
 } from 'lucide-react';
 import {
   getServiceAccountInfo, testAndSaveConnection, getSectionLiveData,
-  saveSectionStock, saveSectionEstimates,
+  saveSectionStock, saveSectionEstimates, saveCustomerSyncConfig, syncCustomersFromSheet,
 } from './actions';
 
 interface Connection {
@@ -65,20 +65,34 @@ export default function StockSheetPage() {
   const [savingEstimates, setSavingEstimates] = useState(false);
   const [rowsError, setRowsError] = useState<string | null>(null);
 
+  const [customerSyncForm, setCustomerSyncForm] = useState({ tab_name: '', name_column: 'A', driver_column: 'D', header_row: 1 });
+  const [savingCustomerConfig, setSavingCustomerConfig] = useState(false);
+  const [syncingCustomers, setSyncingCustomers] = useState(false);
+  const [customerSyncResult, setCustomerSyncResult] = useState<string | null>(null);
+
   const loadSetup = useCallback(async () => {
     if (!business?.id) return;
     setLoading(true);
     try {
-      const [connRes, sectionsRes, svcRes] = await Promise.all([
+      const [connRes, sectionsRes, svcRes, custSyncRes] = await Promise.all([
         supabase.from('google_sheet_connections').select('spreadsheet_id, spreadsheet_label, last_verified_at').eq('business_id', business.id).maybeSingle(),
         supabase.from('stock_sections').select('*').eq('business_id', business.id).order('sort_order'),
         getServiceAccountInfo(),
+        supabase.from('customer_sync_config').select('*').eq('business_id', business.id).maybeSingle(),
       ]);
       if (connRes.error) throw connRes.error;
       if (sectionsRes.error) throw sectionsRes.error;
       setConnection(connRes.data || null);
       setSections(sectionsRes.data || []);
       setServiceEmail(svcRes.email);
+      if (custSyncRes.data) {
+        setCustomerSyncForm({
+          tab_name: custSyncRes.data.tab_name,
+          name_column: custSyncRes.data.name_column,
+          driver_column: custSyncRes.data.driver_column,
+          header_row: custSyncRes.data.header_row,
+        });
+      }
       if (sectionsRes.data && sectionsRes.data.length > 0 && !activeSectionId) {
         setActiveSectionId(sectionsRes.data[0].id);
       }
@@ -226,6 +240,37 @@ export default function StockSheetPage() {
     toast.success('Copied \u2014 share your sheet with this email as Editor');
   };
 
+  const handleSaveCustomerConfig = async () => {
+    if (!customerSyncForm.tab_name.trim()) { toast.error('Tab name is required'); return; }
+    setSavingCustomerConfig(true);
+    try {
+      const result = await saveCustomerSyncConfig(customerSyncForm);
+      if (result.error) throw new Error(result.error);
+      toast.success('Customer sync configured');
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to save configuration');
+    } finally {
+      setSavingCustomerConfig(false);
+    }
+  };
+
+  const handleSyncCustomers = async () => {
+    setSyncingCustomers(true);
+    setCustomerSyncResult(null);
+    try {
+      const result = await syncCustomersFromSheet();
+      if (result.error) throw new Error(result.error);
+      const msg = `Synced ${result.total} customers \u2014 ${result.created} new, ${result.updated} updated`;
+      setCustomerSyncResult(msg);
+      toast.success(msg);
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to sync customers');
+      setCustomerSyncResult(null);
+    } finally {
+      setSyncingCustomers(false);
+    }
+  };
+
   if (loading) {
     return (
       <BusinessLayout>
@@ -306,6 +351,44 @@ export default function StockSheetPage() {
               >
                 <ExternalLink size={13} /> Open Sheet
               </a>
+            </div>
+
+            {/* CUSTOMER SYNC — pull customers directly from a tab in the same sheet */}
+            <div className="card-base p-5">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center"><Users size={16} className="text-primary" /></div>
+                <div>
+                  <h3 className="font-bold text-foreground">Sync Customers from Sheet</h3>
+                  <p className="text-xs text-muted-foreground">Pulls customer names + driver from a tab, creates new customers automatically (each gets their own order link).</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+                <div className="col-span-2">
+                  <label className="block text-xs font-medium text-foreground mb-1.5">Tab Name</label>
+                  <input type="text" className="input-field text-sm" placeholder="e.g. Customer Order Details" value={customerSyncForm.tab_name} onChange={(e) => setCustomerSyncForm((f) => ({ ...f, tab_name: e.target.value }))} />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-foreground mb-1.5">Name Col</label>
+                  <input type="text" maxLength={2} className="input-field text-sm uppercase" value={customerSyncForm.name_column} onChange={(e) => setCustomerSyncForm((f) => ({ ...f, name_column: e.target.value.toUpperCase() }))} />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-foreground mb-1.5">Driver Col</label>
+                  <input type="text" maxLength={2} className="input-field text-sm uppercase" value={customerSyncForm.driver_column} onChange={(e) => setCustomerSyncForm((f) => ({ ...f, driver_column: e.target.value.toUpperCase() }))} />
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <button onClick={handleSaveCustomerConfig} disabled={savingCustomerConfig} className="btn-secondary text-sm flex items-center gap-2">
+                  {savingCustomerConfig && <span className="w-4 h-4 border-2 border-current/30 border-t-current rounded-full animate-spin" />}
+                  Save Config
+                </button>
+                <button onClick={handleSyncCustomers} disabled={syncingCustomers || !customerSyncForm.tab_name} className="btn-primary text-sm flex items-center gap-2 disabled:opacity-50">
+                  {syncingCustomers && <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
+                  <RefreshCw size={14} /> {syncingCustomers ? 'Syncing...' : 'Sync Customers Now'}
+                </button>
+              </div>
+              {customerSyncResult && (
+                <p className="text-xs text-success mt-3 flex items-center gap-1.5"><CheckCircle size={13} /> {customerSyncResult}</p>
+              )}
             </div>
 
             <div className="flex items-center justify-between">

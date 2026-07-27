@@ -655,3 +655,42 @@ security, it just stops paying for a round-trip that wasn't buying
 additional real protection.
 
 Verified with a full production build.
+
+## Plan tiers restructured to your exact spec
+
+`src/lib/planAccess.ts` rebuilt around the three-tier breakdown you gave:
+
+- **Starter (7 screens)**: Dashboard, Orders, Customers, Products, Staff,
+  Subscription, Settings
+- **Professional (+3 = 10 total)**: adds Reports, Stocks, Drivers
+- **Enterprise (all 17)**: adds Order Tracking, Customer Analytics, Customer
+  Portal, Stock Sheet (Google), Estimates, Purchase Orders, API Access
+
+The "which 3" for Professional and "which 7" for Enterprise were my call
+(reporting/inventory/delivery as the natural next tier; the rest as more
+advanced/integration-heavy features) — easy to swap any individual screen
+between tiers in that one file if you'd rather group them differently.
+
+## Customers can now sync directly from a Google Sheet
+
+New: a "Sync Customers from Sheet" panel on the **Stock Sheet (Google)**
+page (reuses the same sheet connection you already set up for stock/
+estimates — no second connection needed). Matches the reference app's exact
+mechanic: reads a name column + driver column from a tab, upserts customers
+by name (updates existing, creates new ones with an auto-generated unique
+slug), preserves sheet row order as `sort_order`. New customers immediately
+get a working order-portal token via the trigger already in place.
+
+New files: `readCustomerRows()` in `src/lib/google/sheets.ts`,
+`saveCustomerSyncConfig()` / `syncCustomersFromSheet()` in
+`src/app/stock-sheet/actions.ts`. New migration:
+`20260727000002_customer_sheet_sync.sql` (`customer_sync_config` table).
+
+**I could not open your actual sheet to check its real layout** — `docs.
+google.com` isn't reachable from where I work, so this defaults to the
+reference app's convention (name in column A, driver in column D). Confirm
+or adjust the tab name and columns in the UI to match your sheet before
+syncing, and check the result message (shows how many were created vs.
+updated) to confirm it worked as expected.
+
+Verified with a full production build.
