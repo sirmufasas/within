@@ -2,31 +2,16 @@
 import React from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
-const data = [
-  { day: '07/07', orders: 28, delivered: 25, revenue: 840 },
-  { day: '08/07', orders: 35, delivered: 31, revenue: 1050 },
-  { day: '09/07', orders: 22, delivered: 20, revenue: 660 },
-  { day: '10/07', orders: 41, delivered: 38, revenue: 1230 },
-  { day: '11/07', orders: 38, delivered: 34, revenue: 1140 },
-  { day: '12/07', orders: 46, delivered: 42, revenue: 1380 },
-  { day: '13/07', orders: 52, delivered: 48, revenue: 1560 },
-  { day: '14/07', orders: 31, delivered: 28, revenue: 930 },
-  { day: '15/07', orders: 29, delivered: 25, revenue: 870 },
-  { day: '16/07', orders: 44, delivered: 39, revenue: 1320 },
-  { day: '17/07', orders: 37, delivered: 33, revenue: 1110 },
-  { day: '18/07', orders: 48, delivered: 44, revenue: 1440 },
-  { day: '19/07', orders: 42, delivered: 38, revenue: 1260 },
-  { day: '20/07', orders: 34, delivered: 27, revenue: 1020 },
-];
-
-interface DataPoint {
+export interface OrderVolumePoint {
   day: string;
   orders: number;
+  delivered: number;
   revenue: number;
 }
 
 interface OrderVolumeChartProps {
-  onDataPointClick?: (data: DataPoint) => void;
+  data: OrderVolumePoint[];
+  onDataPointClick?: (data: OrderVolumePoint) => void;
 }
 
 function CustomTooltip({ active, payload, label }: { active?: boolean; payload?: Array<{ name: string; value: number; color: string }>; label?: string }) {
@@ -46,7 +31,7 @@ function CustomTooltip({ active, payload, label }: { active?: boolean; payload?:
   );
 }
 
-export default function OrderVolumeChart({ onDataPointClick }: OrderVolumeChartProps) {
+export default function OrderVolumeChart({ data, onDataPointClick }: OrderVolumeChartProps) {
   const handleClick = (chartData: any) => {
     if (chartData?.activePayload?.[0]?.payload) {
       onDataPointClick?.(chartData.activePayload[0].payload);

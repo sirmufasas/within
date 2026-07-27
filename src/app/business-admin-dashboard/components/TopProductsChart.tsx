@@ -2,24 +2,16 @@
 import React from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
-const data = [
-  { name: 'Sourdough', sales: 162, revenue: 486 },
-  { name: 'Croissants', sales: 124, revenue: 372 },
-  { name: 'Bolo Rei', sales: 98, revenue: 294 },
-  { name: 'Pão Alentejano', sales: 82, revenue: 248 },
-  { name: 'Pastel Nata', sales: 70, revenue: 210 },
-  { name: 'Broa Milho', sales: 54, revenue: 164 },
-];
-
 const barColors = ['var(--primary)', '#6366F1', '#818CF8', '#A5B4FC', 'var(--accent)', '#7DD3FC'];
 
-interface ProductDataPoint {
+export interface ProductDataPoint {
   name: string;
   sales: number;
   revenue: number;
 }
 
 interface TopProductsChartProps {
+  data: ProductDataPoint[];
   onDataPointClick?: (data: ProductDataPoint) => void;
 }
 
@@ -36,12 +28,24 @@ function CustomTooltip({ active, payload, label }: { active?: boolean; payload?:
   );
 }
 
-export default function TopProductsChart({ onDataPointClick }: TopProductsChartProps) {
+export default function TopProductsChart({ data, onDataPointClick }: TopProductsChartProps) {
   const handleClick = (barData: any) => {
     if (barData?.activePayload?.[0]?.payload) {
       onDataPointClick?.(barData.activePayload[0].payload);
     }
   };
+
+  if (data.length === 0) {
+    return (
+      <div className="card-base p-5">
+        <div className="mb-4">
+          <h3 className="font-semibold text-foreground">Top Products</h3>
+          <p className="text-xs text-muted-foreground">By revenue this month</p>
+        </div>
+        <p className="text-sm text-muted-foreground text-center py-16">No sales yet this month.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="card-base p-5">

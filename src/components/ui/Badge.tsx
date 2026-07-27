@@ -1,7 +1,7 @@
 import React from 'react';
 
 type BadgeVariant =
-  | 'pending' |'confirmed' |'production' |'ready' |'out-for-delivery' |'delivered' |'cancelled' |'active' |'trial' |'expiring' |'expired' |'suspended' |'low-stock' |'out-of-stock' |'in-stock' |'success' |'warning' |'danger' |'info' |'neutral';
+  | 'pending' |'confirmed' |'production' |'processing' |'ready' |'out-for-delivery' |'delivered' |'cancelled' |'active' |'trial' |'expiring' |'expired' |'suspended' |'low-stock' |'out-of-stock' |'in-stock' |'success' |'warning' |'danger' |'info' |'neutral';
 
 interface BadgeProps {
   variant: BadgeVariant;
@@ -14,6 +14,7 @@ const variantStyles: Record<BadgeVariant, string> = {
   pending: 'bg-amber-50 text-amber-700 border border-amber-200',
   confirmed: 'bg-blue-50 text-blue-700 border border-blue-200',
   production: 'bg-violet-50 text-violet-700 border border-violet-200',
+  processing: 'bg-violet-50 text-violet-700 border border-violet-200',
   ready: 'bg-cyan-50 text-cyan-700 border border-cyan-200',
   'out-for-delivery': 'bg-orange-50 text-orange-700 border border-orange-200',
   delivered: 'bg-emerald-50 text-emerald-700 border border-emerald-200',
@@ -37,6 +38,7 @@ const dotColors: Record<BadgeVariant, string> = {
   pending: 'bg-amber-500',
   confirmed: 'bg-blue-500',
   production: 'bg-violet-500',
+  processing: 'bg-violet-500',
   ready: 'bg-cyan-500',
   'out-for-delivery': 'bg-orange-500',
   delivered: 'bg-emerald-500',

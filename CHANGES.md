@@ -740,3 +740,41 @@ everything actually is. Kept a lightweight inline "add location" so new
 branches can actually receive stock into something.
 
 All three verified with a full production build.
+
+## Dashboard — the actual first screen every user sees — was 100% mock, now fully real
+
+Found this while addressing "no more mock data": every single component on the
+main Dashboard (`business-admin-dashboard`) had zero Supabase calls —
+`DashboardMetrics`, `DashboardCharts`, `OrderVolumeChart`, `TopProductsChart`,
+`RecentOrdersTable`, `StockAlertsPanel`, `ActivityFeed` — all hardcoded fake
+numbers, fake orders, fake activity. This is the page every single user lands
+on first, so it mattered more than almost anything else still mock.
+
+**Now all real:**
+- KPI cards: orders today/yesterday, pending orders, today's revenue vs
+  yesterday, stock alerts, total customers + new this week, active
+  deliveries — all computed from real `order_submissions`/`customers`/
+  `stock_batches`/`deliveries` data
+- Order volume + revenue trend chart: real daily data from the last 14 days
+- Top products chart: real revenue ranking from the last 31 days
+- Recent Orders table: real orders, real customer names, real totals —
+  **made read-only** rather than porting over the old fake inline status
+  editor (it only updated local state, never saved — exactly the kind of
+  deceptive UI this whole session has been fixing). Links through to the
+  real Orders page for actual edits.
+- Stock Alerts: real low/out-of-stock products, same logic as the Products page
+- Recent Activity: merges real recent orders and real stock movements into
+  one timeline
+
+**Small supporting fix:** added a `processing` variant to the shared `Badge`
+component — the dashboard's old mock data used fictional status values
+(`production`, `out-for-delivery`) that don't exist in your real schema
+(`pending`/`confirmed`/`processing`/`ready`/`delivered`/`cancelled`).
+
+**Still genuinely mock, for full transparency** (matches what "not touched
+this pass" always meant): Staff Management, the Subscription page's Billing
+History table (already clearly labeled "Example data"), and every Super
+Admin panel screen. Say which one matters most next and I'll do that one
+properly, same as everything else.
+
+Verified with a full production build.
