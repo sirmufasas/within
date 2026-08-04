@@ -12,7 +12,7 @@ import { useRouter } from 'next/navigation';
 import WithinLoader from '@/components/WithinLoader';
 import LoadingOverlay from '@/components/ui/LoadingOverlay';
 
-type LoginFormData = {
+type LoginFormData = {  
   email: string;
   password: string;
   rememberMe: boolean;
